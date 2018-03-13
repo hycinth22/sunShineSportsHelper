@@ -74,6 +74,7 @@ func login() {
 		return
 	}
 	saveSession(s)
+	status(s)
 }
 func status(s *jkwx.Session) {
 	// TODO
@@ -115,6 +116,7 @@ func upload(s *jkwx.Session) {
 	}
 	if status == 1 {
 		fmt.Println("OK.")
+		status(s)
 	} else {
 		fmt.Printf("Status %d", s)
 	}
