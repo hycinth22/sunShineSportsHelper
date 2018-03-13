@@ -36,7 +36,8 @@ func init() {
 	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
 
 	flag.BoolVar(&cmdFlags.upload, "upload", false, "upload sport data")
-	flag.Float64Var(&cmdFlags.distance, "distance", 3.000000 * (float64(randRange(8000, 12000))/10000), "distance(精确到小数点后6位)")
+	// 3.5 * 95%-113%
+	flag.Float64Var(&cmdFlags.distance, "distance", 3.500000 * (float64(randRange(9500, 11300))/10000), "distance(精确到小数点后6位)")
 	flag.DurationVar(&cmdFlags.duration, "duration", time.Duration(randRange(12, 17))*time.Minute+time.Duration(randRange(0, 60))*time.Second, "time duration")
 }
 
