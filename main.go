@@ -44,9 +44,9 @@ func main() {
 	flag.Parse()
 	switch {
 	case cmdFlags.help:
-		help()
+		printHelp()
 	case cmdFlags.login:
-		login()
+		loginAccount()
 	default:
 		// need session
 		s := readSession()
@@ -56,27 +56,27 @@ func main() {
 		}
 		switch {
 		case cmdFlags.status:
-			status(s)
+			showStatus(s)
 		case cmdFlags.upload:
-			upload(s)
+			uploadData(s)
 		}
 	}
 }
 
-func help() {
+func printHelp() {
 	flag.Usage()
 	os.Exit(0)
 }
-func login() {
+func loginAccount() {
 	s, err := jkwx.Login(cmdFlags.user, "123", fmt.Sprintf("%x", md5.Sum([]byte(cmdFlags.password))))
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 	saveSession(s)
-	status(s)
+	showStatus(s)
 }
-func status(s *jkwx.Session) {
+func showStatus(s *jkwx.Session) {
 	// TODO
 	r, err := jkwx.GetSportResult(s)
 	if err != nil {
@@ -93,7 +93,7 @@ func status(s *jkwx.Session) {
 	fmt.Printf("达标距离：\t%07.6f 公里\n", r.Qualified)
 	// fmt.Printf("%+v", r)
 }
-func upload(s *jkwx.Session) {
+func uploadData(s *jkwx.Session) {
 	distance := cmdFlags.distance
 	duration := cmdFlags.duration
 	endTime := time.Now().Add(-time.Duration(randRange(1, 10)) * time.Minute)
@@ -116,7 +116,7 @@ func upload(s *jkwx.Session) {
 	}
 	if status == 1 {
 		fmt.Println("OK.")
-		status(s)
+		showStatus(s)
 	} else {
 		fmt.Printf("Status %d", s)
 	}
