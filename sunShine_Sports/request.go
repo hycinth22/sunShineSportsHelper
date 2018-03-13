@@ -1,0 +1,193 @@
+package sunShine_Sports
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
+)
+
+type Session struct {
+	UserID             int
+	TokenID            string
+	UserExpirationTime int64
+	UserInfo           UserInfo
+}
+type UserInfo struct {
+	Id          int    `json:"id"`
+	InClassID   int    `json:"inClassID"`
+	InClassName string `json:"inClassName"`
+	//InCollegeID string `json:"inCollegeID"`
+	IsTeacher     int    `json:"isTeacher"`
+	NickName      string `json:"nickName"`
+	PhoneNumber   string `json:"phoneNumber"`
+	Sex           string `json:"sex"`
+	StudentName   string `json:"studentName"`
+	StudentNumber string `json:"studentNumber"`
+	// UserRoleID    int
+}
+type HTTPError struct {
+	msg     string
+	httpErr error
+}
+
+func (e HTTPError) Error() string {
+	return e.msg + "\n" + e.httpErr.Error()
+}
+
+const (
+	server            = "http://www.ccxyct.com:8080"
+	loginURL          = server + "/sunShine_Sports/loginSport.action"
+	uploadDataURL     = server + "/sunShine_Sports/xtUploadData.action"
+	getSportResultURL = server + "/sunShine_Sports/xtGetSportResult.action"
+	userAgent         = "Dalvik/2.1.0 (Linux; U; Android 7.0)"
+
+	schoolId = "60"
+)
+
+func Login(stuNum string, phoneNum string, password string) (s *Session, e error) {
+	s = CreateSession(0, "")
+
+	req, err := http.NewRequest(http.MethodPost, loginURL, strings.NewReader(url.Values{
+		"stuNum":   {stuNum},
+		"phoneNum": {phoneNum},
+		"passWd":   {password},
+		"schoolId": {schoolId},
+		"stuId":    {"1"},
+		"token":    {""},
+	}.Encode()))
+	if err != nil {
+		return nil, HTTPError{"HTTP Create Request Failed.", err}
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("UserID", "0")
+	req.Header.Set("crack", "0")
+
+	resp, err := http.DefaultClient.Do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		return nil, HTTPError{"HTTP Send Request Failed! ", err}
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP Get Failed Resp! %s", http.StatusText(resp.StatusCode))
+	}
+	respBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP Read Resp Failed! %s", err.Error())
+	}
+
+	var respMsg struct {
+		Status             int
+		Date               string
+		UserInfo           UserInfo
+		TokenID            string
+		UserExpirationTime int64
+		UserID             int
+	}
+	err = json.Unmarshal(respBytes, &respMsg)
+	if err != nil {
+		return nil, fmt.Errorf("reslove Failed. %s %s", err.Error(), string(respBytes))
+	}
+	if respMsg.Status != 1 {
+		return nil, fmt.Errorf("resp status not ok. %d", respMsg.Status)
+	}
+	s.UserID, s.TokenID, s.UserExpirationTime, s.UserInfo = respMsg.UserID, respMsg.TokenID, respMsg.UserExpirationTime, respMsg.UserInfo
+	return s, nil
+}
+func CreateSession(uid int, token string) *Session {
+	return &Session{UserID: uid, TokenID: token}
+}
+
+func UploadData(session *Session, distance float64, beginTime time.Time, endTime time.Time) (status int, e error){
+	const timePattern = "2006-01-02 15:04:05"
+	req, err := http.NewRequest(http.MethodPost, uploadDataURL, strings.NewReader(url.Values{
+		"results":   {fmt.Sprintf("%07.6f", distance)},
+		"beginTime": {beginTime.Format(timePattern)},
+		"endTime":   {endTime.Format(timePattern)},
+		"isValid":   {"1"},
+		"schoolId":  {schoolId},
+		"bz":        {""},
+	}.Encode()))
+	if err != nil {
+		return -1, HTTPError{"HTTP Create Request Failed.", err}
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("UserID", strconv.Itoa(session.UserID))
+	req.Header.Set("TokenID", session.TokenID)
+	req.Header.Set("crack", "0")
+
+	resp, err := http.DefaultClient.Do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		return -1, fmt.Errorf("HTTP Send Request Failed! %s", err.Error())
+	}
+	if resp.StatusCode != http.StatusOK {
+		return -1, fmt.Errorf("HTTP Get Failed Resp! %s", http.StatusText(resp.StatusCode))
+	}
+	respBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return -1, fmt.Errorf("HTTP Read Resp Failed! %s", err.Error())
+	}
+
+	var respMsg struct {
+		Status int
+	}
+	err = json.Unmarshal(respBytes, &respMsg)
+	if err != nil {
+		return -1, fmt.Errorf("reslove Failed. %s %s", err.Error(), string(respBytes))
+	}
+
+	return respMsg.Status, nil
+}
+
+type SportResult struct {
+	Distance  float64 `json:"result"`
+	LastTime  string `json:"lastTime`
+	Year      int `json:"year`
+	Qualified float64 `json:"qualified`
+}
+func GetSportResult(session *Session) (r *SportResult, e error) {
+	req, err := http.NewRequest(http.MethodPost, getSportResultURL, strings.NewReader("flag=0"))
+	if err != nil {
+		return nil, fmt.Errorf("HTTP Create Request Failed. %s", err.Error())
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("UserID", strconv.Itoa(session.UserID))
+	req.Header.Set("TokenID", session.TokenID)
+	req.Header.Set("crack", "0")
+
+	resp, err := http.DefaultClient.Do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		return nil, fmt.Errorf("HTTP Send Request Failed! %s", err.Error())
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP Get Failed Resp! %s", http.StatusText(resp.StatusCode))
+	}
+	respBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP Read Resp Failed! %s", err.Error())
+	}
+	var respMsg SportResult
+	err = json.Unmarshal(respBytes, &respMsg)
+	if err != nil {
+		return nil, fmt.Errorf("reslove Failed. %s %s", err.Error(), string(respBytes))
+	}
+	return &respMsg, nil
+}
