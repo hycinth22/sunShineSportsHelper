@@ -30,7 +30,7 @@ func init() {
 	flag.BoolVar(&cmdFlags.help, "help", false, "this help")
 
 	flag.BoolVar(&cmdFlags.login, "login", false, "login into account")
-	flag.StringVar(&cmdFlags.user, "user", "", "account(stuNum)")
+	flag.StringVar(&cmdFlags.user, "user", defaultStuNum, "account(stuNum)")
 	flag.StringVar(&cmdFlags.password, "password", "", "password")
 
 	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
@@ -50,14 +50,13 @@ func main() {
 		loginAccount()
 	default:
 		// need session
-		s := readSession()
+		s := readSessionById(cmdFlags.user)
 		if s == nil {
 			fmt.Println("Need to login.")
 			return
 		}
+		showStatus(s)
 		switch {
-		case cmdFlags.status:
-			showStatus(s)
 		case cmdFlags.upload:
 			uploadData(s)
 		}

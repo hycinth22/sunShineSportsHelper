@@ -9,23 +9,34 @@ import (
 	jkwx "./sunShine_Sports"
 )
 
-const sessionFile =  "sunShine_Sports.session"
-func saveSession(s *jkwx.Session){
-	f, err := os.Create(sessionFile)
-	if err!=nil{
+const sessionFileFormat = "sunShine_Sports_%s.session"
+const defaultStuNum = "default" //用于未输入user时的默认参数名
+
+func getSessionFilePath(s *jkwx.Session) string {
+	return getSessionFilePathById(s.UserInfo.StudentNumber)
+}
+func getSessionFilePathById(stuNum string) string {
+	return fmt.Sprintf(sessionFileFormat, stuNum)
+}
+func saveSession(s *jkwx.Session) {
+	f, err := os.Create(getSessionFilePath(s))
+	if err != nil {
 		panic(err)
 	}
-	if err := gob.NewEncoder(f).Encode(s); err != nil{
+	if err := gob.NewEncoder(f).Encode(s); err != nil {
 		panic(err)
 	}
 }
 func readSession() *jkwx.Session {
+	return readSessionById(defaultStuNum)
+}
+func readSessionById(stuNu string) *jkwx.Session {
+	f, err := os.Open(getSessionFilePathById(stuNu))
 	var s jkwx.Session
-	f, err := os.Open(sessionFile)
-	if err != nil{
+	if err != nil {
 		return nil
 	}
-	if err := gob.NewDecoder(f).Decode(&s); err != nil{
+	if err := gob.NewDecoder(f).Decode(&s); err != nil {
 		fmt.Println(err.Error())
 		return nil
 	}
