@@ -75,10 +75,18 @@ func printHelp() {
 	os.Exit(0)
 }
 func loginAccount() {
-	s, err := jkwx.Login(cmdFlags.user, "123", fmt.Sprintf("%x", md5.Sum([]byte(cmdFlags.password))))
-	if err != nil {
-		fmt.Println(err.Error())
+	var s *jkwx.Session
+	s = readSessionById(cmdFlags.user)
+	if s != nil{
+		fmt.Println("Alread Login.")
 		return
+	}else{
+		var err error
+		s, err = jkwx.Login(cmdFlags.user, "123", fmt.Sprintf("%x", md5.Sum([]byte(cmdFlags.password))))
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
 	}
 	saveSession(s)
 	showStatus(s)

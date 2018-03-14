@@ -42,7 +42,7 @@ func readSessionById(stuNu string) *jkwx.Session {
 	}
 	nowTime := time.Now()
 	expiredTime := time.Unix(s.UserExpirationTime/1000, 0)
-	fmt.Println("Alread Login.")
+	fmt.Println("Use Existent Session.")
 	fmt.Println("nowTime", nowTime.Format(timePattern))
 	fmt.Println("expiredTime", expiredTime.Format(timePattern))
 	fmt.Println()
