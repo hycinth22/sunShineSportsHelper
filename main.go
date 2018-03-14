@@ -90,6 +90,9 @@ func showStatus(s *jkwx.Session) {
 		fmt.Println(err.Error())
 		return
 	}
+	fmt.Println("-----------")
+	fmt.Println("| 帐号信息 |")
+	fmt.Println("-----------")
 	fmt.Println("ID：\t", s.UserInfo.Id)
 	fmt.Println("班级：\t", s.UserInfo.InClassName)
 	fmt.Println("学号：\t", s.UserInfo.StudentNumber)
@@ -98,6 +101,7 @@ func showStatus(s *jkwx.Session) {
 	fmt.Printf("LastTime：\t%s \n", r.LastTime)
 	fmt.Printf("已跑距离：\t%07.6f 公里\n", r.Distance)
 	fmt.Printf("达标距离：\t%07.6f 公里\n", r.Qualified)
+	fmt.Println("-----------")
 	// fmt.Printf("%+v", r)
 }
 func uploadData(s *jkwx.Session) {
@@ -106,6 +110,10 @@ func uploadData(s *jkwx.Session) {
 	endTime := time.Now().Add(-time.Duration(randRange(1, 10)) * time.Minute)
 	beginTime := endTime.Add(-duration)
 	v := cmdFlags.distance * 1000 / duration.Seconds()
+
+	fmt.Println("--------------")
+	fmt.Println("| 确认上传数据 |")
+	fmt.Println("---------------")
 	fmt.Println("起始时间：", beginTime.Format(timePattern))
 	fmt.Println("结束时间：", endTime.Format(timePattern))
 	fmt.Printf("将于%s内完成%.6f公里距离，速度约为%.2fm/s \n", duration, distance, v)
@@ -113,18 +121,23 @@ func uploadData(s *jkwx.Session) {
 	fmt.Println("请输入YES确认")
 	var confirm string
 	fmt.Scanf("%s", &confirm)
+	fmt.Println("---------------")
 	if confirm != "YES" {
 		return
 	}
+
 	status, err := jkwx.UploadData(s, cmdFlags.distance, beginTime, endTime)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
+	fmt.Println("---------------")
+	fmt.Println("上传结果：")
 	if status == 1 {
 		fmt.Println("OK.")
 		showStatus(s)
 	} else {
 		fmt.Printf("Status %d", s)
 	}
+	fmt.Println("---------------")
 }
