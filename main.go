@@ -36,13 +36,20 @@ func init() {
 	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
 
 	flag.BoolVar(&cmdFlags.upload, "upload", false, "upload sport data")
-	// 3.5 * 95%-113%
-	flag.Float64Var(&cmdFlags.distance, "distance", 3.500000 * (float64(randRange(9500, 11300))/10000), "distance(精确到小数点后6位)")
-	flag.DurationVar(&cmdFlags.duration, "duration", time.Duration(randRange(12, 17))*time.Minute+time.Duration(randRange(0, 60))*time.Second, "time duration")
+	distanceRandomRatio :=  float64(randRange(9500, 11142))/10000 // 95%-111.42%
+	flag.Float64Var(&cmdFlags.distance, "distance", 3.500000 *distanceRandomRatio, "distance(精确到小数点后6位)")
+
+	randomDuration := time.Duration(randRange(12, 20))*time.Minute
+	flag.DurationVar(&cmdFlags.duration, "duration", randomDuration, "time duration")
+	flag.Parse()
+
+	// 小数部分随机化
+	cmdFlags.distance += float64(randRange(-99999, 99999)) /1000000 // -0.09 ~ 0.09
+	// 秒级随机化
+	cmdFlags.duration += time.Duration(randRange(0, 60))*time.Second
 }
 
 func main() {
-	flag.Parse()
 	switch {
 	case cmdFlags.help:
 		printHelp()
