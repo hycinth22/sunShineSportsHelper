@@ -8,6 +8,7 @@ import (
 	"time"
 
 	jkwx "./sunShine_Sports"
+	"./utility"
 )
 
 const timePattern = "2006-01-02 15:04:05"
@@ -36,17 +37,22 @@ func init() {
 	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
 
 	flag.BoolVar(&cmdFlags.upload, "upload", false, "upload sport data")
-	distanceRandomRatio :=  float64(randRange(9500, 11142))/10000 // 95%-111.42%
+	distanceRandomRatio :=  float64(utility.RandRange(9500, 11142))/10000 // 95%-111.42%
 	flag.Float64Var(&cmdFlags.distance, "distance", 3.500000 *distanceRandomRatio, "distance(精确到小数点后6位)")
 
-	randomDuration := time.Duration(randRange(12, 20))*time.Minute
+	randomDuration := time.Duration(utility.RandRange(12, 20))*time.Minute
 	flag.DurationVar(&cmdFlags.duration, "duration", randomDuration, "time duration")
 	flag.Parse()
 
+	// TOOD: beginTime
+
+	// TOOD: distance sperate
+
+
 	// 小数部分随机化
-	cmdFlags.distance += float64(randRange(-99999, 99999)) /1000000 // -0.09 ~ 0.09
+	cmdFlags.distance += float64(utility.RandRange(-99999, 99999)) /1000000 // -0.09 ~ 0.09
 	// 秒级随机化
-	cmdFlags.duration += time.Duration(randRange(0, 60))*time.Second
+	cmdFlags.duration += time.Duration(utility.RandRange(0, 60))*time.Second
 }
 
 func main() {
@@ -115,7 +121,7 @@ func showStatus(s *jkwx.Session) {
 func uploadData(s *jkwx.Session) {
 	distance := cmdFlags.distance
 	duration := cmdFlags.duration
-	endTime := time.Now().Add(-time.Duration(randRange(1, 10)) * time.Minute)
+	endTime := time.Now().Add(-time.Duration(utility.RandRange(1, 10)) * time.Minute)
 	beginTime := endTime.Add(-duration)
 	v := cmdFlags.distance * 1000 / duration.Seconds()
 
