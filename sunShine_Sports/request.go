@@ -2,6 +2,7 @@ package sunShine_Sports
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -44,18 +45,27 @@ const (
 	loginURL          = server + "/sunShine_Sports/loginSport.action"
 	uploadDataURL     = server + "/sunShine_Sports/xtUploadData.action"
 	getSportResultURL = server + "/sunShine_Sports/xtGetSportResult.action"
-	userAgent         = "Dalvik/2.1.0 (Linux; U; Android 7.0)"
+	defaultUserAgent  = "Dalvik/2.1.0 (Linux; U; Android 7.0)"
 
 	schoolId = "60"
 )
 
-func Login(stuNum string, phoneNum string, password string) (s *Session, e error) {
+var (
+	ErrIncorrectAccount = errors.New("account or password is INCORRECT")
+	ua = defaultUserAgent
+)
+
+func SetUserAgent(newUA string) {
+	ua = newUA
+}
+
+func Login(stuNum string, phoneNum string, passwordHash string) (s *Session, e error) {
 	s = CreateSession(0, "")
 
 	req, err := http.NewRequest(http.MethodPost, loginURL, strings.NewReader(url.Values{
 		"stuNum":   {stuNum},
 		"phoneNum": {phoneNum},
-		"passWd":   {password},
+		"passWd":   {passwordHash},
 		"schoolId": {schoolId},
 		"stuId":    {"1"},
 		"token":    {""},
@@ -65,7 +75,7 @@ func Login(stuNum string, phoneNum string, password string) (s *Session, e error
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", ua)
 	req.Header.Set("UserID", "0")
 	req.Header.Set("crack", "0")
 
@@ -96,6 +106,9 @@ func Login(stuNum string, phoneNum string, password string) (s *Session, e error
 	if err != nil {
 		return nil, fmt.Errorf("reslove Failed. %s %s", err.Error(), string(respBytes))
 	}
+	if respMsg.Status == 0{
+		return nil, ErrIncorrectAccount
+	}
 	if respMsg.Status != 1 {
 		return nil, fmt.Errorf("resp status not ok. %d", respMsg.Status)
 	}
@@ -106,7 +119,7 @@ func CreateSession(uid int, token string) *Session {
 	return &Session{UserID: uid, TokenID: token}
 }
 
-func UploadData(session *Session, distance float64, beginTime time.Time, endTime time.Time) (status int, e error){
+func UploadData(session *Session, distance float64, beginTime time.Time, endTime time.Time) (status int, e error) {
 	const timePattern = "2006-01-02 15:04:05"
 	req, err := http.NewRequest(http.MethodPost, uploadDataURL, strings.NewReader(url.Values{
 		"results":   {fmt.Sprintf("%07.6f", distance)},
@@ -121,7 +134,7 @@ func UploadData(session *Session, distance float64, beginTime time.Time, endTime
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", ua)
 	req.Header.Set("UserID", strconv.Itoa(session.UserID))
 	req.Header.Set("TokenID", session.TokenID)
 	req.Header.Set("crack", "0")
@@ -154,10 +167,11 @@ func UploadData(session *Session, distance float64, beginTime time.Time, endTime
 
 type SportResult struct {
 	Distance  float64 `json:"result"`
-	LastTime  string `json:"lastTime`
-	Year      int `json:"year`
+	LastTime  string  `json:"lastTime`
+	Year      int     `json:"year`
 	Qualified float64 `json:"qualified`
 }
+
 func GetSportResult(session *Session) (r *SportResult, e error) {
 	req, err := http.NewRequest(http.MethodPost, getSportResultURL, strings.NewReader("flag=0"))
 	if err != nil {
@@ -165,7 +179,7 @@ func GetSportResult(session *Session) (r *SportResult, e error) {
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", ua)
 	req.Header.Set("UserID", strconv.Itoa(session.UserID))
 	req.Header.Set("TokenID", session.TokenID)
 	req.Header.Set("crack", "0")
