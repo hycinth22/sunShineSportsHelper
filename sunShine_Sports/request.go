@@ -22,7 +22,8 @@ type UserInfo struct {
 	Id          int    `json:"id"`
 	InClassID   int    `json:"inClassID"`
 	InClassName string `json:"inClassName"`
-	//InCollegeID string `json:"inCollegeID"`
+	InCollegeID int `json:"inCollegeID"`
+	InCollegeName string `json:"inCollegeName"`
 	IsTeacher     int    `json:"isTeacher"`
 	NickName      string `json:"nickName"`
 	PhoneNumber   string `json:"phoneNumber"`
