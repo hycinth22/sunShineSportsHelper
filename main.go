@@ -16,6 +16,8 @@ const timePattern = "2006-01-02 15:04:05"
 var cmdFlags struct {
 	help bool
 
+	silent bool
+
 	login    bool
 	user     string
 	password string
@@ -28,13 +30,14 @@ var cmdFlags struct {
 }
 
 func init() {
-	flag.BoolVar(&cmdFlags.help, "help", false, "this help")
+	flag.BoolVar(&cmdFlags.help, "h", false, "this help")
+	flag.BoolVar(&cmdFlags.silent, "q", false, "quiet mode")
 
 	flag.BoolVar(&cmdFlags.login, "login", false, "login into account")
-	flag.StringVar(&cmdFlags.user, "user", defaultStuNum, "account(stuNum)")
-	flag.StringVar(&cmdFlags.password, "password", "", "password")
+	flag.StringVar(&cmdFlags.user, "u", defaultStuNum, "account(stuNum)")
+	flag.StringVar(&cmdFlags.password, "p", "", "password")
 
-	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
+	flag.BoolVar(&cmdFlags.status, "s", false, "view account status")
 
 	flag.BoolVar(&cmdFlags.upload, "upload", false, "upload sport data")
 	distanceRandomRatio :=  float64(utility.RandRange(9500, 11142))/10000 // 95%-111.42%
@@ -132,12 +135,14 @@ func uploadData(s *jkwx.Session) {
 	fmt.Println("结束时间：", endTime.Format(timePattern))
 	fmt.Printf("将于%s内完成%.6f公里距离，速度约为%.2fm/s \n", duration, distance, v)
 
-	fmt.Println("请输入YES确认")
-	var confirm string
-	fmt.Scanf("%s", &confirm)
-	fmt.Println("---------------")
-	if confirm != "YES" {
-		return
+	if !cmdFlags.silent {
+		fmt.Println("请输入YES确认")
+		var confirm string
+		fmt.Scanf("%s", &confirm)
+		fmt.Println("---------------")
+		if confirm != "YES" {
+			return
+		}
 	}
 
 	status, err := jkwx.UploadData(s, cmdFlags.distance, beginTime, endTime)
