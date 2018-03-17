@@ -16,9 +16,11 @@ chmod 777 $logFile
 # function signature: exec(user)
 function execJKWX()
 {
+ping baidu.com -c 20 # random delay
 user=$1
 pwd=$2
 dis=$3
+echo $user + `date` &>>$logFile
 $main -u $user -login -p $pwd &>> $logFile
 sleep 5s
 # $main -status -u $user &>> $logFile
