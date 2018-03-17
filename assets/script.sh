@@ -18,10 +18,11 @@ function execJKWX()
 {
 user=$1
 pwd=$2
-$main -login -u $user -p $pwd &>> $logFile
+dis=$3
+$main -u $user -login -p $pwd &>> $logFile
 sleep 5s
 # $main -status -u $user &>> $logFile
-$main -upload -u $user -q &>> $logFile
+$main -u $user -upload -q -distance $dis &>> $logFile
 echo "----------------" &>> $logFile
 }
 export main
@@ -34,7 +35,7 @@ echo "开始执行" &>> $logFile
 echo "Date:" + `date` &>>$logFile
 echo "----------------" &>> $logFile
 # read each and call execJKWX
-awk '{print $1 " " $2;"execJKWX " $1 " " $2|getline result;print result}' < $wd/accounts.list
+awk '{print $1 " " $2;"execJKWX " $1 " " $2 " " $3|getline result;print result}' < $wd/accounts.list
 
 # recover previous workDir
 popd
