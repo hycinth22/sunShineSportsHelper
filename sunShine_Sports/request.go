@@ -135,7 +135,7 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 		// 距离随机化
 		//distanceRandomRatio :=  float64(utility.RandRange(9500, 11142))/10000 // 距离波动化比例 95%-111.42%
 		// 范围取随机
-		switch userInfo.Sex{
+		switch userInfo.Sex {
 		case "F":
 			singleDistance = float64(utility.RandRange(2090, 2900)) / 1000 // 2.09-2.9
 		case "M":
@@ -143,12 +143,12 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 		default:
 			panic("Unknown Sex" + userInfo.Sex)
 		}
-		singleDistance += float64(utility.RandRange(-99999, 99999)) /1000000 // // 小数部分随机化 -0.09 ~ 0.09
+		singleDistance += float64(utility.RandRange(-99999, 99999)) / 1000000 // // 小数部分随机化 -0.09 ~ 0.09
 
 		var randomDuration time.Duration
 		// 时间间隔随机化
 		// 参数设定：min>minDis*3, max<maxDis*10
-		switch userInfo.Sex{
+		switch userInfo.Sex {
 		case "F":
 			randomDuration = time.Duration(utility.RandRange(11, 20)) * time.Minute // 11-20min
 		case "M":
@@ -157,10 +157,9 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 			panic("Unknown Sex" + userInfo.Sex)
 		}
 
-		randomDuration += time.Duration(utility.RandRange(0, 60))*time.Second // 时间间隔秒级随机化
+		randomDuration += time.Duration(utility.RandRange(0, 60)) * time.Second // 时间间隔秒级随机化
 		endTime := lastBeginTime.Add(-time.Duration(utility.RandRange(1, 10)) * time.Minute)
 		beginTime := endTime.Add(-randomDuration)
-
 
 		records = append(records, Record{
 			Distance:  singleDistance,
@@ -173,7 +172,7 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 	}
 	nRecord := len(records)
 	reverse := make([]Record, nRecord)
-	for i:=0; i<nRecord;i++{
+	for i := 0; i < nRecord; i++ {
 		reverse[i] = records[nRecord-i-1]
 	}
 	return reverse
