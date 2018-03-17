@@ -4,4 +4,6 @@ rem win64
 SET CGO_ENABLED=0
 SET GOOS=windows
 SET GOARCH=amd64
-go build -o binary/jkwx.exe
+go build -o build/jkwx.exe
+
+xcopy /-Y /R assets/* build/*
