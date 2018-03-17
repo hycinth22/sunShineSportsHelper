@@ -37,7 +37,7 @@ func init() {
 	flag.StringVar(&cmdFlags.user, "u", defaultStuNum, "account(stuNum)")
 	flag.StringVar(&cmdFlags.password, "p", "", "password")
 
-	flag.BoolVar(&cmdFlags.status, "s", false, "view account status")
+	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
 
 	flag.BoolVar(&cmdFlags.upload, "upload", false, "upload sport data")
 	distanceRandomRatio :=  float64(utility.RandRange(9500, 11142))/10000 // 95%-111.42%
