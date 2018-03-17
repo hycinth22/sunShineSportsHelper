@@ -163,6 +163,7 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 		endTime := lastBeginTime.Add(-time.Duration(utility.RandRange(1, 10)) * time.Minute)
 		beginTime := endTime.Add(-randomDuration)
 
+
 		records = append(records, Record{
 			Distance:  singleDistance,
 			BeginTime: beginTime,
@@ -172,7 +173,12 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 		remain -= singleDistance
 		lastBeginTime = beginTime
 	}
-	return records
+	nRecord := len(records)
+	reverse := make([]Record, nRecord)
+	for i:=0; i<nRecord;i++{
+		reverse[i] = records[nRecord-i-1]
+	}
+	return reverse
 }
 
 func UploadRecord(session *Session, record Record) (status int, e error) {
