@@ -40,22 +40,12 @@ func init() {
 	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
 
 	flag.BoolVar(&cmdFlags.upload, "upload", false, "upload sport data")
-	distanceRandomRatio :=  float64(utility.RandRange(9500, 11142))/10000 // 95%-111.42%
-	flag.Float64Var(&cmdFlags.distance, "distance", 3.500000 *distanceRandomRatio, "distance(精确到小数点后6位)")
+
+	flag.Float64Var(&cmdFlags.distance, "distance", 3.500000, "distance(精确到小数点后6位)")
 
 	randomDuration := time.Duration(utility.RandRange(12, 20))*time.Minute
 	flag.DurationVar(&cmdFlags.duration, "duration", randomDuration, "time duration")
 	flag.Parse()
-
-	// TOOD: beginTime
-
-	// TOOD: distance sperate
-
-
-	// 小数部分随机化
-	cmdFlags.distance += float64(utility.RandRange(-99999, 99999)) /1000000 // -0.09 ~ 0.09
-	// 秒级随机化
-	cmdFlags.duration += time.Duration(utility.RandRange(0, 60))*time.Second
 }
 
 func main() {
@@ -122,18 +112,21 @@ func showStatus(s *jkwx.Session) {
 	// fmt.Printf("%+v", r)
 }
 func uploadData(s *jkwx.Session) {
-	distance := cmdFlags.distance
-	duration := cmdFlags.duration
-	endTime := time.Now().Add(-time.Duration(utility.RandRange(1, 10)) * time.Minute)
-	beginTime := endTime.Add(-duration)
-	v := cmdFlags.distance * 1000 / duration.Seconds()
+	totalDistance := cmdFlags.distance
+	records := jkwx.CreateRecords(s.UserInfo, totalDistance, time.Now())
 
 	fmt.Println("--------------")
 	fmt.Println("| 确认上传数据 |")
 	fmt.Println("---------------")
-	fmt.Println("起始时间：", beginTime.Format(timePattern))
-	fmt.Println("结束时间：", endTime.Format(timePattern))
-	fmt.Printf("将于%s内完成%.6f公里距离，速度约为%.2fm/s \n", duration, distance, v)
+	for i, record := range records{
+		distance := record.Distance
+		duration := record.EndTime.Sub(record.BeginTime)
+		v := record.Distance * 1000 / duration.Seconds()
+		fmt.Println("第", i+1, "条")
+		fmt.Println("起始时间：", record.BeginTime.Format(timePattern))
+		fmt.Println("结束时间：", record.EndTime.Format(timePattern))
+		fmt.Printf("用时%s内完成%.6f公里距离，速度约为%.2fm/s \n", duration, distance, v)
+	}
 
 	if !cmdFlags.silent {
 		fmt.Println("请输入YES确认")
@@ -145,18 +138,29 @@ func uploadData(s *jkwx.Session) {
 		}
 	}
 
-	status, err := jkwx.UploadData(s, cmdFlags.distance, beginTime, endTime)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
+	allStatus := make([]int, len(records))
+	for i, record := range records{
+		var err error
+		allStatus[i], err = jkwx.UploadRecord(s, record)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
 	}
+
 	fmt.Println("---------------")
 	fmt.Println("上传结果：")
-	if status == 1 {
-		fmt.Println("OK.")
+	hasError := false
+	for _, status := range allStatus{
+		if status == 1 {
+			fmt.Println("OK.")
+		} else {
+			fmt.Printf("Status %d", s)
+			hasError = true
+		}
+	}
+	if !hasError{
 		showStatus(s)
-	} else {
-		fmt.Printf("Status %d", s)
 	}
 	fmt.Println("---------------")
 }

@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"../utility"
 )
 
 type Session struct {
@@ -19,10 +21,10 @@ type Session struct {
 	UserInfo           UserInfo
 }
 type UserInfo struct {
-	Id          int    `json:"id"`
-	InClassID   int    `json:"inClassID"`
-	InClassName string `json:"inClassName"`
-	InCollegeID int `json:"inCollegeID"`
+	Id            int    `json:"id"`
+	InClassID     int    `json:"inClassID"`
+	InClassName   string `json:"inClassName"`
+	InCollegeID   int    `json:"inCollegeID"`
 	InCollegeName string `json:"inCollegeName"`
 	IsTeacher     int    `json:"isTeacher"`
 	NickName      string `json:"nickName"`
@@ -53,7 +55,7 @@ const (
 
 var (
 	ErrIncorrectAccount = errors.New("account or password is INCORRECT")
-	ua = defaultUserAgent
+	ua                  = defaultUserAgent
 )
 
 func SetUserAgent(newUA string) {
@@ -107,7 +109,7 @@ func Login(stuNum string, phoneNum string, passwordHash string) (s *Session, e e
 	if err != nil {
 		return nil, fmt.Errorf("reslove Failed. %s %s", err.Error(), string(respBytes))
 	}
-	if respMsg.Status == 0{
+	if respMsg.Status == 0 {
 		return nil, ErrIncorrectAccount
 	}
 	if respMsg.Status != 1 {
@@ -118,6 +120,63 @@ func Login(stuNum string, phoneNum string, passwordHash string) (s *Session, e e
 }
 func CreateSession(uid int, token string) *Session {
 	return &Session{UserID: uid, TokenID: token}
+}
+
+type Record struct {
+	Distance  float64
+	BeginTime time.Time
+	EndTime   time.Time
+}
+
+func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []Record {
+	records := make([]Record, 0, int(distance/3))
+	remain := distance
+	lastBeginTime := beforeTime
+	for remain > 0 {
+		var singleDistance float64
+		// 距离随机化
+		//distanceRandomRatio :=  float64(utility.RandRange(9500, 11142))/10000 // 距离波动化比例 95%-111.42%
+		// 范围取随机
+		switch userInfo.Sex{
+		case "F":
+			singleDistance = float64(utility.RandRange(2090, 2900)) / 1000 // 2.09-2.9
+		case "M":
+			singleDistance = float64(utility.RandRange(2590, 3909)) / 1000 // 2.59-3.9
+		default:
+			panic("Unknown Sex" + userInfo.Sex)
+		}
+		singleDistance += float64(utility.RandRange(-99999, 99999)) /1000000 // // 小数部分随机化 -0.09 ~ 0.09
+
+		var randomDuration time.Duration
+		// 时间间隔随机化
+		// 参数设定：min>minDis*3, max<maxDis*10
+		switch userInfo.Sex{
+		case "F":
+			randomDuration = time.Duration(utility.RandRange(11, 20)) * time.Minute // 11-20min
+		case "M":
+			randomDuration = time.Duration(utility.RandRange(14, 25)) * time.Minute // 14-25min
+		default:
+			panic("Unknown Sex" + userInfo.Sex)
+		}
+
+		randomDuration += time.Duration(utility.RandRange(0, 60))*time.Second // 时间间隔秒级随机化
+		endTime := lastBeginTime.Add(-time.Duration(utility.RandRange(1, 10)) * time.Minute)
+		beginTime := endTime.Add(-randomDuration)
+
+		records = append(records, Record{
+			Distance:  singleDistance,
+			BeginTime: beginTime,
+			EndTime:   endTime,
+		})
+
+		remain -= singleDistance
+		lastBeginTime = beginTime
+	}
+	return records
+}
+
+func UploadRecord(session *Session, record Record) (status int, e error) {
+	return UploadData(session, record.Distance, record.BeginTime, record.EndTime)
 }
 
 func UploadData(session *Session, distance float64, beginTime time.Time, endTime time.Time) (status int, e error) {
