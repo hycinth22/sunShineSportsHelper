@@ -6,4 +6,4 @@ SET GOOS=windows
 SET GOARCH=amd64
 go build -o build/jkwx.exe
 
-xcopy /-Y /R assets/* build/*
+xcopy /-Y /R assets build
