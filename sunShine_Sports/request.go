@@ -19,6 +19,7 @@ type Session struct {
 	TokenID            string
 	UserExpirationTime int64
 	UserInfo           UserInfo
+	UserAgent          string
 }
 type UserInfo struct {
 	Id            int    `json:"id"`
@@ -48,14 +49,14 @@ const (
 	loginURL          = server + "/sunShine_Sports/loginSport.action"
 	uploadDataURL     = server + "/sunShine_Sports/xtUploadData.action"
 	getSportResultURL = server + "/sunShine_Sports/xtGetSportResult.action"
-	defaultUserAgent  = "Dalvik/2.1.0 (Linux; U; Android 7.0)"
+	DefaultUserAgent  = "Dalvik/2.1.0 (Linux; U; Android 7.0)"
 
 	schoolId = "60"
 )
 
 var (
 	ErrIncorrectAccount = errors.New("account or password is INCORRECT")
-	ua                  = defaultUserAgent
+	ua                  = DefaultUserAgent
 )
 
 func SetUserAgent(newUA string) {
@@ -63,7 +64,7 @@ func SetUserAgent(newUA string) {
 }
 
 func Login(stuNum string, phoneNum string, passwordHash string) (s *Session, e error) {
-	s = CreateSession(0, "")
+	s = &Session{UserID: 0, TokenID: "", UserAgent: DefaultUserAgent}
 
 	req, err := http.NewRequest(http.MethodPost, loginURL, strings.NewReader(url.Values{
 		"stuNum":   {stuNum},
@@ -117,9 +118,6 @@ func Login(stuNum string, phoneNum string, passwordHash string) (s *Session, e e
 	}
 	s.UserID, s.TokenID, s.UserExpirationTime, s.UserInfo = respMsg.UserID, respMsg.TokenID, respMsg.UserExpirationTime, respMsg.UserInfo
 	return s, nil
-}
-func CreateSession(uid int, token string) *Session {
-	return &Session{UserID: uid, TokenID: token}
 }
 
 type Record struct {

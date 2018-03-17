@@ -86,6 +86,7 @@ func loginAccount() {
 			fmt.Println(err.Error())
 			return
 		}
+		s.UserAgent = utility.GetRandUserAgent()
 	}
 	saveSession(s)
 	showStatus(s)
@@ -138,6 +139,7 @@ func uploadData(s *jkwx.Session) {
 		}
 	}
 
+	jkwx.SetUserAgent(s.UserAgent)
 	allStatus := make([]int, len(records))
 	for i, record := range records{
 		var err error

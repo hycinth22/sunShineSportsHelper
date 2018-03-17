@@ -7,6 +7,7 @@ import (
 	"time"
 
 	jkwx "./sunShine_Sports"
+	"./utility"
 )
 
 const sessionFileFormat = "sunShine_Sports_%s.session"
@@ -39,6 +40,10 @@ func readSessionById(stuNu string) *jkwx.Session {
 	if err := gob.NewDecoder(f).Decode(&s); err != nil {
 		fmt.Println(err.Error())
 		return nil
+	}
+	if s.UserAgent == ""{
+		// upgrade session from old version
+		s.UserAgent = utility.GetRandUserAgent()
 	}
 	nowTime := time.Now()
 	expiredTime := time.Unix(s.UserExpirationTime/1000, 0)
