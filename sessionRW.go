@@ -44,10 +44,12 @@ func readSessionById(stuNu string) *jkwx.Session {
 	if s.UserAgent == ""{
 		// upgrade session from old version
 		s.UserAgent = utility.GetRandUserAgent()
+		saveSession(&s)
 	}
 	nowTime := time.Now()
 	expiredTime := time.Unix(s.UserExpirationTime/1000, 0)
 	fmt.Println("Use Existent Session.")
+	fmt.Println("UserAgent", s.UserAgent)
 	fmt.Println("nowTime", nowTime.Format(timePattern))
 	fmt.Println("expiredTime", expiredTime.Format(timePattern))
 	fmt.Println()
