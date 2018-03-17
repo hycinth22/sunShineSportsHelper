@@ -7,8 +7,11 @@ import (
 	"time"
 )
 
-func RandRange(min int, max int) int {
+func init()  {
 	rand.Seed(time.Now().Unix())
+}
+func RandRange(min int, max int) int {
+
 	return min + rand.Int()%(max-min+1)
 }
 
