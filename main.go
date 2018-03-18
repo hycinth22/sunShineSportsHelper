@@ -18,14 +18,15 @@ var cmdFlags struct {
 
 	silent bool
 
-	login    bool
-	forceLogin    bool
-	user     string
-	password string
+	login      bool
+	forceLogin bool
+	user       string
+	password   string
 
 	status bool
 
 	upload   bool
+	ignoreCompleted bool
 	distance float64
 	duration time.Duration
 }
@@ -42,10 +43,10 @@ func init() {
 	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
 
 	flag.BoolVar(&cmdFlags.upload, "upload", false, "upload sport data")
-
+	flag.BoolVar(&cmdFlags.ignoreCompleted, "ignoreCompleted", false, "continue to upload though completed")
 	flag.Float64Var(&cmdFlags.distance, "distance", 3.500000, "distance(精确到小数点后6位)")
 
-	randomDuration := time.Duration(utility.RandRange(12, 20))*time.Minute
+	randomDuration := time.Duration(utility.RandRange(12, 20)) * time.Minute
 	flag.DurationVar(&cmdFlags.duration, "duration", randomDuration, "time duration")
 	flag.Parse()
 }
@@ -78,10 +79,10 @@ func printHelp() {
 func loginAccount() {
 	var s *jkwx.Session
 	s = readSessionById(cmdFlags.user)
-	if s != nil{
+	if s != nil {
 		fmt.Println("Alread Login.")
 		return
-	}else{
+	} else {
 		var err error
 		s, err = jkwx.Login(cmdFlags.user, "123", fmt.Sprintf("%x", md5.Sum([]byte(cmdFlags.password))))
 		if err != nil {
@@ -116,12 +117,22 @@ func showStatus(s *jkwx.Session) {
 }
 func uploadData(s *jkwx.Session) {
 	totalDistance := cmdFlags.distance
+	ignoreCompleted := cmdFlags.ignoreCompleted
+
+	if !ignoreCompleted{
+		r, err := jkwx.GetSportResult(s)
+		if err == nil && r.Distance > r.Qualified {
+			fmt.Println("已达标，停止操作")
+			return
+		}
+	}
+
 	records := jkwx.CreateRecords(s.UserInfo, totalDistance, time.Now())
 
 	fmt.Println("--------------")
 	fmt.Println("| 确认上传数据 |")
 	fmt.Println("---------------")
-	for i, record := range records{
+	for i, record := range records {
 		distance := record.Distance
 		duration := record.EndTime.Sub(record.BeginTime)
 		v := record.Distance * 1000 / duration.Seconds()
@@ -143,7 +154,7 @@ func uploadData(s *jkwx.Session) {
 
 	jkwx.SetUserAgent(s.UserAgent)
 	allStatus := make([]int, len(records))
-	for i, record := range records{
+	for i, record := range records {
 		var err error
 		allStatus[i], err = jkwx.UploadRecord(s, record)
 		if err != nil {
@@ -155,7 +166,7 @@ func uploadData(s *jkwx.Session) {
 	fmt.Println("---------------")
 	fmt.Println("上传结果：")
 	hasError := false
-	for _, status := range allStatus{
+	for _, status := range allStatus {
 		if status == 1 {
 			fmt.Println("OK.")
 		} else {
@@ -163,7 +174,7 @@ func uploadData(s *jkwx.Session) {
 			hasError = true
 		}
 	}
-	if !hasError{
+	if !hasError {
 		showStatus(s)
 	}
 	fmt.Println("---------------")
