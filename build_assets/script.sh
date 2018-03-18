@@ -18,8 +18,8 @@ function execJKWX()
     user=$1
     pwd=$2
     dis=$3
-	log="${logFile}_${user}"
-    echo $user + `date` &>>
+    log="${logFile}_${user}"
+    echo $user + `date` &>> ${log}
     $main -u $user -login -p $pwd &>> ${log}
     randomSleep 5 15
     # $main -status -u $user &>> ${log}
