@@ -5,4 +5,4 @@ export GOOS=linux
 export GOARCH=amd64
 go build -o build/jkwx
 
-cp -i assets/* build/
+cp -i build_assets/* build/

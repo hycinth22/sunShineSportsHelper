@@ -11,3 +11,5 @@ SET CGO_ENABLED=0
 SET GOOS=linux
 SET GOARCH=amd64
 go build -o releases/sunShineSportsHelper-linux-x64
+
+xcopy /-Y /R build_assets build releases
