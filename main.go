@@ -19,6 +19,7 @@ var cmdFlags struct {
 	silent bool
 
 	login    bool
+	forceLogin    bool
 	user     string
 	password string
 
@@ -34,6 +35,7 @@ func init() {
 	flag.BoolVar(&cmdFlags.silent, "q", false, "quiet mode")
 
 	flag.BoolVar(&cmdFlags.login, "login", false, "login into account")
+	flag.BoolVar(&cmdFlags.forceLogin, "forceLogin", false, "login into account(not use existent seesion)")
 	flag.StringVar(&cmdFlags.user, "u", defaultStuNum, "account(stuNum)")
 	flag.StringVar(&cmdFlags.password, "p", "", "password")
 
