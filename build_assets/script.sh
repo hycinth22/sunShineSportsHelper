@@ -18,12 +18,13 @@ function execJKWX()
     user=$1
     pwd=$2
     dis=$3
-    echo $user + `date` &>>$logFile
-    $main -u $user -login -p $pwd &>> $logFile
+	log="${logFile}_${user}"
+    echo $user + `date` &>>
+    $main -u $user -login -p $pwd &>> ${log}
     randomSleep 5 15
-    # $main -status -u $user &>> $logFile
-    $main -u $user -upload -q -distance $dis &>> $logFile
-    echo "----------------" &>> $logFile
+    # $main -status -u $user &>> ${log}
+    $main -u $user -upload -q -distance $dis &>> ${log}
+    echo "----------------" &>> ${log}
 	randomSleep 20 60
 }
 # function signature: rand(min, max)

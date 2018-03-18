@@ -13,7 +13,7 @@ touch $logFile
 chmod 777 $logFile
 
 sleep $2
-$main -u $1 -upload -q
+$main -u $1 -upload -q &>> $logFile
 
 # recover previous workDir
 popd
