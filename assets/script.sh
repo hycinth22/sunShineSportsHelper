@@ -12,32 +12,49 @@ logFile=$wd/log/script_`date +%Y-%m-%d`.log
 touch $logFile
 chmod 777 $logFile
 
-# create function and export it
 # function signature: exec(user)
 function execJKWX()
 {
-ping baidu.com -c 20 # random delay
-user=$1
-pwd=$2
-dis=$3
-echo $user + `date` &>>$logFile
-$main -u $user -login -p $pwd &>> $logFile
-sleep 5s
-# $main -status -u $user &>> $logFile
-$main -u $user -upload -q -distance $dis &>> $logFile
-echo "----------------" &>> $logFile
+    user=$1
+    pwd=$2
+    dis=$3
+    echo $user + `date` &>>$logFile
+    $main -u $user -login -p $pwd &>> $logFile
+    randomSleep 5 15
+    # $main -status -u $user &>> $logFile
+    $main -u $user -upload -q -distance $dis &>> $logFile
+    echo "----------------" &>> $logFile
+	randomSleep 20 60
 }
-export main
-export logFile
-export -f execJKWX
+# function signature: rand(min, max)
+function rand(){  
+    min=$1  
+    max=$(($2-$min+1))  
+    num=$(cat /dev/urandom | head -n 10 | cksum | awk -F ' ' '{print $1}')  
+    echo $(($num%$max+$min))  
+}  
+# function signature: randomSleep(min, max)
+function randomSleep()
+{
+    min=$1  
+    max=$2
+    rnd=$(rand $min $max)
+	echo "Sleep ${rnd}s" &>> $logFile
+	sleep ${rnd}'s'
+}
 
 # begin working
 echo -e "\n" >> $logFile
 echo "开始执行" &>> $logFile
 echo "Date:" + `date` &>>$logFile
 echo "----------------" &>> $logFile
+
 # read each and call execJKWX
-awk '{print $1 " " $2;"execJKWX " $1 " " $2 " " $3|getline result;print result}' < $wd/accounts.list
+while read user passwd distance
+do
+    echo $(execJKWX $user $passwd $distance)
+    echo "$user $passwd $distance"
+done < accounts.list
 
 # recover previous workDir
 popd
