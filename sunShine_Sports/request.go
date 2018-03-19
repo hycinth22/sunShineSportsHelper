@@ -147,7 +147,8 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 		default:
 			panic("Unknown Sex" + userInfo.Sex)
 		}
-		if remain < minDistance{
+		// min limit 2.0
+		if remain < 2.0{
 			break
 		}
 		if remain > maxDistance{
