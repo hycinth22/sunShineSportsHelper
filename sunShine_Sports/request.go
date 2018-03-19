@@ -135,27 +135,47 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 		// 距离随机化
 		//distanceRandomRatio :=  float64(utility.RandRange(9500, 11142))/10000 // 距离波动化比例 95%-111.42%
 		// 范围取随机
+		var minDistance float64
+		var maxDistance float64
 		switch userInfo.Sex {
 		case "F":
-			singleDistance = float64(utility.RandRange(2090, 2900)) / 1000 // 2.09-2.9
+			minDistance = 2.09
+			maxDistance = 2.9
 		case "M":
-			singleDistance = float64(utility.RandRange(2590, 3909)) / 1000 // 2.59-3.9
+			minDistance = 2.59
+			maxDistance = 3.9
 		default:
 			panic("Unknown Sex" + userInfo.Sex)
 		}
-		singleDistance += float64(utility.RandRange(-99999, 99999)) / 1000000 // // 小数部分随机化 -0.09 ~ 0.09
+		if remain < minDistance{
+			break
+		}
+		if remain > maxDistance{
+			singleDistance = float64(utility.RandRange(int(minDistance *1000), int(maxDistance*1000))) / 1000 // 取主要距离
+		}else{
+			singleDistance = remain
+		}
+
+		singleDistance += float64(utility.RandRange(-99999, 99999)) / 1000000 // 小数部分随机化 -0.09 ~ 0.09
 
 		var randomDuration time.Duration
 		// 时间间隔随机化
 		// 参数设定：min>minDis*3, max<maxDis*10
+		var minMinuteDuration int
+		var maxMinuteDuration int
 		switch userInfo.Sex {
 		case "F":
-			randomDuration = time.Duration(utility.RandRange(11, 20)) * time.Minute // 11-20min
+			// 11-20min
+			minMinuteDuration = 11
+			maxMinuteDuration = 20
 		case "M":
-			randomDuration = time.Duration(utility.RandRange(14, 25)) * time.Minute // 14-25min
+			// 14-25min
+			minMinuteDuration = 14
+			maxMinuteDuration = 25
 		default:
 			panic("Unknown Sex" + userInfo.Sex)
 		}
+		randomDuration = time.Duration(utility.RandRange(minMinuteDuration, maxMinuteDuration)) * time.Minute
 
 		randomDuration += time.Duration(utility.RandRange(0, 60)) * time.Second // 时间间隔秒级随机化
 		endTime := lastBeginTime.Add(-time.Duration(utility.RandRange(1, 10)) * time.Minute)
