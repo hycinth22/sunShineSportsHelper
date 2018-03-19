@@ -89,7 +89,7 @@ var UA = []string{
 }
 
 func GetRandUserAgent() string {
-	return UA[RandRange(0, len(UA))]
+	return UA[RandRange(0, len(UA)-1)]
 }
 
 func init() {
