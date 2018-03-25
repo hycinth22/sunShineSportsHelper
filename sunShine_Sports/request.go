@@ -34,6 +34,17 @@ type UserInfo struct {
 	StudentName   string `json:"studentName"`
 	StudentNumber string `json:"studentNumber"`
 	// UserRoleID    int
+
+	// 随机区间（生成记录随机的单次距离区间）
+	RandDistance Float64Range
+	// 限制区间（目标系统限制的单次距离区间）
+	LimitSingleDistance Float64Range
+	// 限制区间（目标系统限制的总距离区间）
+	LimitTotalDistance Float64Range
+}
+type Float64Range struct {
+	Min float64
+	Max float64
 }
 type HTTPError struct {
 	msg     string
@@ -117,6 +128,7 @@ func Login(stuNum string, phoneNum string, passwordHash string) (s *Session, e e
 		return nil, fmt.Errorf("resp status not ok. %d", respMsg.Status)
 	}
 	s.UserID, s.TokenID, s.UserExpirationTime, s.UserInfo = respMsg.UserID, respMsg.TokenID, respMsg.UserExpirationTime, respMsg.UserInfo
+	UpdateDistanceParams(s)
 	return s, nil
 }
 
@@ -132,32 +144,31 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 	lastBeginTime := beforeTime
 	for remain > 0 {
 		var singleDistance float64
-		// 距离随机化
-		//distanceRandomRatio :=  float64(utility.RandRange(9500, 11142))/10000 // 距离波动化比例 95%-111.42%
 		// 范围取随机
-		var minDistance float64
-		var maxDistance float64
-		switch userInfo.Sex {
-		case "F":
-			minDistance = 2.09
-			maxDistance = 2.9
-		case "M":
-			minDistance = 2.59
-			maxDistance = 3.9
-		default:
-			panic("Unknown Sex" + userInfo.Sex)
-		}
-		// min limit 2.0
-		if remain < 2.0{
+		if remain > userInfo.RandDistance.Max {
+			// 检查是否下一条可能丢弃较大的距离
+			if remain-userInfo.RandDistance.Max > userInfo.LimitSingleDistance.Min {
+				// 正常取随机值
+				singleDistance = float64(utility.RandRange(int(userInfo.RandDistance.Min*1000), int(userInfo.RandDistance.Max*1000))) / 1000
+			} else {
+				// 防止剩下比较多，但却不满足最小距离不能生成下一条记录
+				singleDistance = userInfo.LimitSingleDistance.Min
+			}
+		} else if remain > userInfo.LimitSingleDistance.Min {
+			// 最后一条
+			singleDistance = remain
+		} else {
+			if remain > 1.5{
+				fmt.Println("提醒：与限制和随机原则冲突，丢弃较大的距离", remain, "公里")
+			}
 			break
 		}
-		if remain > maxDistance{
-			singleDistance = float64(utility.RandRange(int(minDistance *1000), int(maxDistance*1000))) / 1000 // 取主要距离
-		}else{
-			singleDistance = remain
-		}
 
-		singleDistance += float64(utility.RandRange(-99999, 99999)) / 1000000 // 小数部分随机化 -0.09 ~ 0.09
+		singleDistance += float64(utility.RandRange(0, 99999)) / 1000000 // 小数部分随机化 -0.09 ~ 0.09
+
+		if singleDistance < userInfo.LimitSingleDistance.Min || singleDistance > userInfo.LimitSingleDistance.Max {
+			panic(singleDistance)
+		}
 
 		var randomDuration time.Duration
 		// 时间间隔随机化
@@ -199,6 +210,21 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 	return reverse
 }
 
+// 需要更新距离参数时调用
+func UpdateDistanceParams(s *Session) {
+	switch s.UserInfo.Sex {
+	case "F":
+		s.UserInfo.RandDistance.Min, s.UserInfo.RandDistance.Max = 2.09, 2.9
+		s.UserInfo.LimitSingleDistance.Min, s.UserInfo.LimitSingleDistance.Max = 2.0, 3.0
+		s.UserInfo.LimitTotalDistance.Min, s.UserInfo.LimitTotalDistance.Max = 2.0, 3.0
+	case "M":
+		s.UserInfo.RandDistance.Min, s.UserInfo.RandDistance.Max = 2.59, 3.9
+		s.UserInfo.LimitSingleDistance.Min, s.UserInfo.LimitSingleDistance.Max = 2.0, 4.0
+		s.UserInfo.LimitTotalDistance.Min, s.UserInfo.LimitTotalDistance.Max = 2.0, 5.0
+	default:
+		panic("Unknown Sex" + s.UserInfo.Sex)
+	}
+}
 func UploadRecord(session *Session, record Record) (status int, e error) {
 	return UploadData(session, record.Distance, record.BeginTime, record.EndTime)
 }

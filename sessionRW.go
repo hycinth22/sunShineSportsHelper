@@ -46,6 +46,10 @@ func readSessionById(stuNu string) *jkwx.Session {
 		s.UserAgent = utility.GetRandUserAgent()
 		saveSession(&s)
 	}
+	if s.UserInfo.LimitSingleDistance.Min == 0.0 || s.UserInfo.LimitTotalDistance.Max == 0.0{
+		jkwx.UpdateDistanceParams(&s)
+		saveSession(&s)
+	}
 	nowTime := time.Now()
 	expiredTime := time.Unix(s.UserExpirationTime/1000, 0)
 	fmt.Println("Use Existent Session.")

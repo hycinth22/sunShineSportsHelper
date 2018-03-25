@@ -25,10 +25,10 @@ var cmdFlags struct {
 
 	status bool
 
-	upload   bool
+	upload          bool
 	ignoreCompleted bool
-	distance float64
-	duration time.Duration
+	distance        float64
+	duration        time.Duration
 }
 
 func init() {
@@ -120,7 +120,12 @@ func uploadData(s *jkwx.Session) {
 	totalDistance := cmdFlags.distance
 	ignoreCompleted := cmdFlags.ignoreCompleted
 
-	if !ignoreCompleted{
+	if totalDistance < s.UserInfo.LimitTotalDistance.Min || totalDistance > s.UserInfo.LimitTotalDistance.Max {
+		fmt.Printf("超出限制的总距离（%f - %f）\n", s.UserInfo.LimitTotalDistance.Min, s.UserInfo.LimitTotalDistance.Max)
+		return
+	}
+
+	if !ignoreCompleted {
 		r, err := jkwx.GetSportResult(s)
 		if err == nil && r.Distance > r.Qualified {
 			fmt.Println("已达标，停止操作")
