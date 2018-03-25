@@ -2,7 +2,8 @@
 
 # files
 main=$wd/jkwx
-logFile=$wd/log/script_`date +%Y-%m-%d`.log
+today=`date +%Y-%m-%d`
+logFile=$wd/log/script_$today.log
 
 # create files
 touch $logFile
@@ -14,7 +15,7 @@ function execJKWX()
     user=$1
     pwd=$2
     dis=$3
-    log="${logFile}_${user}"
+	log=$wd/log/script_${today}_${user}.log
     echo $user + `date` | tee -a ${log}
     $main -u $user -login -p $pwd | tee -a ${log}
     randomSleep 15 30
