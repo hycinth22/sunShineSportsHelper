@@ -215,8 +215,8 @@ func UpdateDistanceParams(s *Session) {
 	switch s.UserInfo.Sex {
 	case "F":
 		s.UserInfo.RandDistance.Min, s.UserInfo.RandDistance.Max = 2.09, 2.9
-		s.UserInfo.LimitSingleDistance.Min, s.UserInfo.LimitSingleDistance.Max = 2.0, 3.0
-		s.UserInfo.LimitTotalDistance.Min, s.UserInfo.LimitTotalDistance.Max = 2.0, 3.0
+		s.UserInfo.LimitSingleDistance.Min, s.UserInfo.LimitSingleDistance.Max = 1.0, 3.0
+		s.UserInfo.LimitTotalDistance.Min, s.UserInfo.LimitTotalDistance.Max = 1.0, 3.0
 	case "M":
 		s.UserInfo.RandDistance.Min, s.UserInfo.RandDistance.Max = 2.59, 3.9
 		s.UserInfo.LimitSingleDistance.Min, s.UserInfo.LimitSingleDistance.Max = 2.0, 4.0
