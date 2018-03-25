@@ -42,11 +42,14 @@ func readSessionById(stuNu string) *jkwx.Session {
 		return nil
 	}
 	if s.UserAgent == ""{
-		// upgrade session from old version
+		fmt.Println("Upgrade session file from old version (before 2.0)")
+		fmt.Println("Add UserAgent")
 		s.UserAgent = utility.GetRandUserAgent()
 		saveSession(&s)
 	}
 	if s.UserInfo.LimitSingleDistance.Min == 0.0 || s.UserInfo.LimitTotalDistance.Max == 0.0{
+		fmt.Println("Upgrade session file from old version (before 2.1)")
+		fmt.Println("Add DistanceParams")
 		jkwx.UpdateDistanceParams(&s)
 		saveSession(&s)
 	}
