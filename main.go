@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -30,6 +31,10 @@ var cmdFlags struct {
 	distance        float64
 	duration        time.Duration
 }
+const (
+	defaultDistanceFemale = 2.5
+	defaultDistanceMale = 4.5
+)
 
 func init() {
 	flag.BoolVar(&cmdFlags.help, "h", false, "this help")
@@ -44,7 +49,7 @@ func init() {
 
 	flag.BoolVar(&cmdFlags.upload, "upload", false, "upload sport data")
 	flag.BoolVar(&cmdFlags.ignoreCompleted, "ignoreCompleted", false, "continue to upload though completed")
-	flag.Float64Var(&cmdFlags.distance, "distance", 3.500000, "distance(精确到小数点后6位)")
+	flag.Float64Var(&cmdFlags.distance, "distance", 0.0, "distance(精确到小数点后6位).")
 
 	randomDuration := time.Duration(utility.RandRange(12, 20)) * time.Minute
 	flag.DurationVar(&cmdFlags.duration, "duration", randomDuration, "time duration")
@@ -117,7 +122,19 @@ func showStatus(s *jkwx.Session) {
 	// fmt.Printf("%+v", r)
 }
 func uploadData(s *jkwx.Session) {
-	totalDistance := cmdFlags.distance
+	var totalDistance float64
+	if cmdFlags.distance > 0.0 {
+		totalDistance = cmdFlags.distance
+	} else {
+		switch s.UserInfo.Sex {
+		case "F":
+			totalDistance = defaultDistanceFemale
+		case "M":
+			totalDistance = defaultDistanceMale
+		default:
+			log.Panicln("Unknown sex", s.UserInfo.Sex)
+		}
+	}
 	ignoreCompleted := cmdFlags.ignoreCompleted
 
 	if totalDistance < s.UserInfo.LimitTotalDistance.Min || totalDistance > s.UserInfo.LimitTotalDistance.Max {
