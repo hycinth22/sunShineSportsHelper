@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -147,19 +148,22 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 		// 范围取随机
 		if remain > userInfo.RandDistance.Max {
 			// 检查是否下一条可能丢弃较大的距离
+			// 防止：剩下比较多，但却不满足最小限制距离，不能生成下一条记录
 			if remain-userInfo.RandDistance.Max > userInfo.LimitSingleDistance.Min {
 				// 正常取随机值
 				singleDistance = float64(utility.RandRange(int(userInfo.RandDistance.Min*1000), int(userInfo.RandDistance.Max*1000))) / 1000
 			} else {
-				// 防止剩下比较多，但却不满足最小距离不能生成下一条记录
-				singleDistance = userInfo.LimitSingleDistance.Min
+				// 随机选择本条为最小限制距离，或者为下一条预留最小限制距离
+				// -0.1是为随机部分预留的
+				singleDistance = []float64{userInfo.LimitSingleDistance.Min, remain - userInfo.LimitSingleDistance.Min - 0.1} [utility.RandRange(0, 1)]
 			}
-		} else if remain > userInfo.LimitSingleDistance.Min {
-			// 最后一条
+		} else if remain > userInfo.LimitSingleDistance.Min && remain < userInfo.LimitSingleDistance.Max {
+			// 最后一条小于随机的最大值，但符合限制区间，直接使用
 			singleDistance = remain
 		} else {
-			if remain > 1.5{
-				fmt.Println("提醒：与限制和随机原则冲突，丢弃较大的距离", remain, "公里")
+			// 最后一条不符合限制区间，且剩余较多，输出提醒
+			if remain > 0.5 {
+				fmt.Println("提醒：由于随机原则与区间限制的冲突，丢弃了较大的距离", remain, "公里，考虑重新设定距离值。")
 			}
 			break
 		}
@@ -167,7 +171,9 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 		singleDistance += float64(utility.RandRange(0, 99999)) / 1000000 // 小数部分随机化 -0.09 ~ 0.09
 
 		if singleDistance < userInfo.LimitSingleDistance.Min || singleDistance > userInfo.LimitSingleDistance.Max {
-			panic(singleDistance)
+			// 丢弃不合法距离
+			log.Println("Drop distance: ", singleDistance)
+			continue
 		}
 
 		var randomDuration time.Duration
