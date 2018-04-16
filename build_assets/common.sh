@@ -21,7 +21,11 @@ function execJKWX()
     randomSleep 15 30
     # $main -status -u $user | tee -a ${log}
     $main -u $user -upload -q -distance $dis | tee -a ${log}
-    echo "----------------" &>> ${log}
+    echo "----------------" >> ${log}
+
+	if [[ `cat ${log}` =~ "已达标" ]]; then
+		echo $user + " done." >> ${log}.done
+	fi
 	randomSleep 15 360
 }
 # function signature: rand(min, max)
