@@ -27,13 +27,15 @@ var cmdFlags struct {
 	status bool
 
 	upload          bool
+	rawRecord       bool
 	ignoreCompleted bool
 	distance        float64
 	duration        time.Duration
 }
+
 const (
 	defaultDistanceFemale = 2.5
-	defaultDistanceMale = 4.5
+	defaultDistanceMale   = 4.5
 )
 
 func init() {
@@ -48,6 +50,7 @@ func init() {
 	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
 
 	flag.BoolVar(&cmdFlags.upload, "upload", false, "upload sport data")
+	flag.BoolVar(&cmdFlags.rawRecord, "rawRecord", false, "upload rawRecord sport data")
 	flag.BoolVar(&cmdFlags.ignoreCompleted, "ignoreCompleted", false, "continue to upload though completed")
 	flag.Float64Var(&cmdFlags.distance, "distance", 0.0, "distance(精确到小数点后6位).")
 
@@ -122,10 +125,8 @@ func showStatus(s *jkwx.Session) {
 	// fmt.Printf("%+v", r)
 }
 func uploadData(s *jkwx.Session) {
-	var totalDistance float64
-	if cmdFlags.distance > 0.0 {
-		totalDistance = cmdFlags.distance
-	} else {
+	totalDistance  := cmdFlags.distance
+	if cmdFlags.distance == 0.0 {
 		switch s.UserInfo.Sex {
 		case "F":
 			totalDistance = defaultDistanceFemale
@@ -137,20 +138,25 @@ func uploadData(s *jkwx.Session) {
 	}
 	ignoreCompleted := cmdFlags.ignoreCompleted
 
-	if totalDistance < s.UserInfo.LimitTotalDistance.Min || totalDistance > s.UserInfo.LimitTotalDistance.Max {
-		fmt.Printf("超出限制的总距离（%f - %f）\n", s.UserInfo.LimitTotalDistance.Min, s.UserInfo.LimitTotalDistance.Max)
-		return
-	}
-
-	if !ignoreCompleted {
-		r, err := jkwx.GetSportResult(s)
-		if err == nil && r.Distance > r.Qualified {
-			fmt.Println("已达标，停止操作")
+	var records []jkwx.Record
+	if !cmdFlags.rawRecord {
+		if totalDistance < s.UserInfo.LimitTotalDistance.Min || totalDistance > s.UserInfo.LimitTotalDistance.Max {
+			fmt.Printf("超出限制的总距离（%f - %f）\n", s.UserInfo.LimitTotalDistance.Min, s.UserInfo.LimitTotalDistance.Max)
 			return
 		}
-	}
 
-	records := jkwx.CreateRecords(s.UserInfo, totalDistance, time.Now())
+		if !ignoreCompleted {
+			r, err := jkwx.GetSportResult(s)
+			if err == nil && r.Distance > r.Qualified {
+				fmt.Println("已达标，停止操作")
+
+				return
+			}
+		}
+		records = jkwx.CreateRecords(s.UserInfo, totalDistance, time.Now())
+	}else{
+		records = jkwx.CreateRawRecords(totalDistance, time.Now(), cmdFlags.duration)
+	}
 
 	fmt.Println("--------------")
 	fmt.Println("| 确认上传数据 |")

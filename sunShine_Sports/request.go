@@ -139,6 +139,12 @@ type Record struct {
 	EndTime   time.Time
 }
 
+func CreateRawRecords(distance float64, beforeTime time.Time, duration time.Duration) []Record {
+	return []Record{{Distance: distance,
+		BeginTime: beforeTime.Add(-duration),
+		EndTime: beforeTime,
+	}}
+}
 func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []Record {
 	records := make([]Record, 0, int(distance/3))
 	remain := distance
