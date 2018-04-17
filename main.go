@@ -205,6 +205,12 @@ func uploadData(s *jkwx.Session) {
 	}
 	if !hasError {
 		showStatus(s)
+		if !ignoreCompleted {
+			r, err := jkwx.GetSportResult(s)
+			if err == nil && r.Distance > r.Qualified {
+				fmt.Println("已达标")
+			}
+		}
 	}
 	fmt.Println("---------------")
 }
