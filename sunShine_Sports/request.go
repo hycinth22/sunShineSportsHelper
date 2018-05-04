@@ -167,10 +167,10 @@ func SmartCreateRecords(userInfo UserInfo, distance float64, beforeTime time.Tim
 				singleDistance = []float64{userInfo.DistanceLimit.LimitSingleDistance.Min, remain - userInfo.DistanceLimit.LimitSingleDistance.Min}[utility.RandRange(0, 1)]
 			}
 		} else if remain >= userInfo.DistanceLimit.LimitSingleDistance.Min && remain <= userInfo.DistanceLimit.LimitSingleDistance.Max {
-			// 最后一条小于随机的最大值，但符合限制区间，直接使用
+			// 剩余的符合限制区间，直接使用剩余的生成最后一条记录
 			singleDistance = remain
 		} else {
-			// 最后一条不符合限制区间，且剩余较多，输出提醒
+			// 剩余较多，但不符合限制区间无法再生成一条合法记录，输出提醒
 			if remain > 0.5 {
 				fmt.Println("提醒：由于随机原则与区间限制的冲突，丢弃了较大的距离", remain, "公里，考虑重新设定距离值。")
 			}
