@@ -36,6 +36,9 @@ type UserInfo struct {
 	StudentNumber string `json:"studentNumber"`
 	// UserRoleID    int
 
+	DistanceLimit *DistanceParams
+}
+type DistanceParams struct {
 	// 随机区间（生成记录随机的单次距离区间）
 	RandDistance Float64Range
 	// 限制区间（目标系统限制的单次距离区间）
@@ -43,6 +46,7 @@ type UserInfo struct {
 	// 限制区间（目标系统限制的总距离区间）
 	LimitTotalDistance Float64Range
 }
+
 type Float64Range struct {
 	Min float64
 	Max float64
@@ -129,7 +133,7 @@ func Login(stuNum string, phoneNum string, passwordHash string) (s *Session, e e
 		return nil, fmt.Errorf("resp status not ok. %d", respMsg.Status)
 	}
 	s.UserID, s.TokenID, s.UserExpirationTime, s.UserInfo = respMsg.UserID, respMsg.TokenID, respMsg.UserExpirationTime, respMsg.UserInfo
-	UpdateDistanceParams(s)
+	s.UserInfo.DistanceLimit = GetDistanceParams(s)
 	return s, nil
 }
 
@@ -152,18 +156,17 @@ func SmartCreateRecords(userInfo UserInfo, distance float64, beforeTime time.Tim
 	for remain > 0 {
 		var singleDistance float64
 		// 范围取随机
-		if remain > userInfo.RandDistance.Max {
+		if remain > userInfo.DistanceLimit.RandDistance.Max {
 			// 检查是否下一条可能丢弃较大的距离
 			// 防止：剩下比较多，但却不满足最小限制距离，不能生成下一条记录
-			if remain-userInfo.RandDistance.Max > userInfo.LimitSingleDistance.Min {
+			if remain-userInfo.DistanceLimit.RandDistance.Max > userInfo.DistanceLimit.LimitSingleDistance.Min {
 				// 正常取随机值
-				singleDistance = float64(utility.RandRange(int(userInfo.RandDistance.Min*1000), int(userInfo.RandDistance.Max*1000))) / 1000
+				singleDistance = float64(utility.RandRange(int(userInfo.DistanceLimit.RandDistance.Min*1000), int(userInfo.DistanceLimit.RandDistance.Max*1000))) / 1000
 			} else {
 				// 随机选择本条为最小限制距离，或者为下一条预留最小限制距离
-				// -0.1是为随机部分预留的
-				singleDistance = []float64{userInfo.LimitSingleDistance.Min, remain - userInfo.LimitSingleDistance.Min - 0.1}[utility.RandRange(0, 1)]
+				singleDistance = []float64{userInfo.DistanceLimit.LimitSingleDistance.Min, remain - userInfo.DistanceLimit.LimitSingleDistance.Min}[utility.RandRange(0, 1)]
 			}
-		} else if remain > userInfo.LimitSingleDistance.Min && remain < userInfo.LimitSingleDistance.Max {
+		} else if remain >= userInfo.DistanceLimit.LimitSingleDistance.Min && remain <= userInfo.DistanceLimit.LimitSingleDistance.Max {
 			// 最后一条小于随机的最大值，但符合限制区间，直接使用
 			singleDistance = remain
 		} else {
@@ -174,9 +177,20 @@ func SmartCreateRecords(userInfo UserInfo, distance float64, beforeTime time.Tim
 			break
 		}
 
-		singleDistance += float64(utility.RandRange(0, 99999)) / 1000000 // 小数部分随机化 -0.09 ~ 0.09
+		// 小数部分随机化 -0.09 ~ 0.09
+		tinyPart := float64(utility.RandRange(0, 99999)) / 1000000
+		switch r := singleDistance + tinyPart; {
+		case r < userInfo.DistanceLimit.LimitSingleDistance.Min:
+			singleDistance = userInfo.DistanceLimit.LimitSingleDistance.Min
+			/*case r > userInfo.DistanceLimit.LimitSingleDistance.Max:
+			singleDistance = userInfo.DistanceLimit.LimitSingleDistance.Max
+			*/
+		default:
+			singleDistance += tinyPart
+		}
 
-		if singleDistance < userInfo.LimitSingleDistance.Min || singleDistance > userInfo.LimitSingleDistance.Max {
+		// 检测结果合法性，由于TinyPart允许上下浮动0.1
+		if singleDistance < userInfo.DistanceLimit.LimitSingleDistance.Min-0.1 || singleDistance > userInfo.DistanceLimit.LimitSingleDistance.Max+0.1 {
 			// 丢弃不合法距离
 			log.Println("Drop distance: ", singleDistance)
 			continue
@@ -211,7 +225,7 @@ func SmartCreateRecords(userInfo UserInfo, distance float64, beforeTime time.Tim
 			EndTime:   endTime,
 		})
 
-		remain -= singleDistance
+		remain -= singleDistance - tinyPart
 		lastBeginTime = beginTime
 	}
 	nRecord := len(records)
@@ -222,17 +236,20 @@ func SmartCreateRecords(userInfo UserInfo, distance float64, beforeTime time.Tim
 	return reverse
 }
 
-// 需要更新距离参数时调用
-func UpdateDistanceParams(s *Session) {
+func GetDistanceParams(s *Session) *DistanceParams {
 	switch s.UserInfo.Sex {
 	case "F":
-		s.UserInfo.RandDistance.Min, s.UserInfo.RandDistance.Max = 2.09, 2.9
-		s.UserInfo.LimitSingleDistance.Min, s.UserInfo.LimitSingleDistance.Max = 1.0, 3.0
-		s.UserInfo.LimitTotalDistance.Min, s.UserInfo.LimitTotalDistance.Max = 1.0, 3.0
+		return &DistanceParams{
+			RandDistance:        Float64Range{2.0, 3.0},
+			LimitSingleDistance: Float64Range{1.0, 3.0},
+			LimitTotalDistance:  Float64Range{1.0, 3.0},
+		}
 	case "M":
-		s.UserInfo.RandDistance.Min, s.UserInfo.RandDistance.Max = 2.59, 3.9
-		s.UserInfo.LimitSingleDistance.Min, s.UserInfo.LimitSingleDistance.Max = 2.0, 4.0
-		s.UserInfo.LimitTotalDistance.Min, s.UserInfo.LimitTotalDistance.Max = 2.0, 5.0
+		return &DistanceParams{
+			RandDistance:        Float64Range{2.6, 4.0},
+			LimitSingleDistance: Float64Range{2.0, 4.0},
+			LimitTotalDistance:  Float64Range{2.0, 5.0},
+		}
 	default:
 		panic("Unknown Sex" + s.UserInfo.Sex)
 	}

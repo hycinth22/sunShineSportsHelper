@@ -33,11 +33,11 @@ func _() *jkwx.Session {
 }
 func readSessionById(stuNu string) *jkwx.Session {
 	f, err := os.Open(getSessionFilePathById(stuNu))
-	var s jkwx.Session
 	if err != nil {
 		return nil
 	}
-	if err := gob.NewDecoder(f).Decode(&s); err != nil {
+	s := new(jkwx.Session)
+	if err := gob.NewDecoder(f).Decode(s); err != nil {
 		fmt.Println(err.Error())
 		return nil
 	}
@@ -45,14 +45,9 @@ func readSessionById(stuNu string) *jkwx.Session {
 		fmt.Println("Upgrade session file from old version (before 2.0)")
 		fmt.Println("Add UserAgent")
 		s.UserAgent = utility.GetRandUserAgent()
-		saveSession(&s)
+		saveSession(s)
 	}
-	if s.UserInfo.LimitSingleDistance.Min == 0.0 || s.UserInfo.LimitTotalDistance.Max == 0.0 {
-		fmt.Println("Upgrade session file from old version (before 2.1)")
-		fmt.Println("Add DistanceParams")
-		jkwx.UpdateDistanceParams(&s)
-		saveSession(&s)
-	}
+	s.UserInfo.DistanceLimit = jkwx.GetDistanceParams(s)
 	nowTime := time.Now()
 	expiredTime := time.Unix(s.UserExpirationTime/1000, 0)
 	fmt.Println("Use Existent Session.")
@@ -64,5 +59,5 @@ func readSessionById(stuNu string) *jkwx.Session {
 		fmt.Println("Login Expired.")
 		return nil
 	}
-	return &s
+	return s
 }

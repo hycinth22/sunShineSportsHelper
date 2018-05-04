@@ -140,8 +140,8 @@ func uploadData(s *jkwx.Session) {
 
 	var records []jkwx.Record
 	if !cmdFlags.rawRecord {
-		if totalDistance < s.UserInfo.LimitTotalDistance.Min || totalDistance > s.UserInfo.LimitTotalDistance.Max {
-			fmt.Printf("超出限制的总距离（%f - %f）\n", s.UserInfo.LimitTotalDistance.Min, s.UserInfo.LimitTotalDistance.Max)
+		if totalDistance < s.UserInfo.DistanceLimit.LimitTotalDistance.Min || totalDistance > s.UserInfo.DistanceLimit.LimitTotalDistance.Max {
+			fmt.Printf("超出限制的总距离（%f - %f）\n", s.UserInfo.DistanceLimit.LimitTotalDistance.Min, s.UserInfo.DistanceLimit.LimitTotalDistance.Max)
 			return
 		}
 
