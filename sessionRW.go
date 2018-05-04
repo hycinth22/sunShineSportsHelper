@@ -28,7 +28,7 @@ func saveSession(s *jkwx.Session) {
 		panic(err)
 	}
 }
-func readSession() *jkwx.Session {
+func _() *jkwx.Session {
 	return readSessionById(defaultStuNum)
 }
 func readSessionById(stuNu string) *jkwx.Session {
@@ -41,13 +41,13 @@ func readSessionById(stuNu string) *jkwx.Session {
 		fmt.Println(err.Error())
 		return nil
 	}
-	if s.UserAgent == ""{
+	if s.UserAgent == "" {
 		fmt.Println("Upgrade session file from old version (before 2.0)")
 		fmt.Println("Add UserAgent")
 		s.UserAgent = utility.GetRandUserAgent()
 		saveSession(&s)
 	}
-	if s.UserInfo.LimitSingleDistance.Min == 0.0 || s.UserInfo.LimitTotalDistance.Max == 0.0{
+	if s.UserInfo.LimitSingleDistance.Min == 0.0 || s.UserInfo.LimitTotalDistance.Max == 0.0 {
 		fmt.Println("Upgrade session file from old version (before 2.1)")
 		fmt.Println("Add DistanceParams")
 		jkwx.UpdateDistanceParams(&s)

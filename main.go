@@ -43,7 +43,7 @@ func init() {
 	flag.BoolVar(&cmdFlags.silent, "q", false, "quiet mode")
 
 	flag.BoolVar(&cmdFlags.login, "login", false, "login into account")
-	flag.BoolVar(&cmdFlags.forceLogin, "forceLogin", false, "login into account(not use existent seesion)")
+	flag.BoolVar(&cmdFlags.forceLogin, "forceLogin", false, "login into account(not use existent session)")
 	flag.StringVar(&cmdFlags.user, "u", defaultStuNum, "account(stuNum)")
 	flag.StringVar(&cmdFlags.password, "p", "", "password")
 
@@ -125,7 +125,7 @@ func showStatus(s *jkwx.Session) {
 	// fmt.Printf("%+v", r)
 }
 func uploadData(s *jkwx.Session) {
-	totalDistance  := cmdFlags.distance
+	totalDistance := cmdFlags.distance
 	if cmdFlags.distance == 0.0 {
 		switch s.UserInfo.Sex {
 		case "F":
@@ -153,9 +153,11 @@ func uploadData(s *jkwx.Session) {
 				return
 			}
 		}
-		records = jkwx.CreateRecords(s.UserInfo, totalDistance, time.Now())
-	}else{
-		records = jkwx.CreateRawRecords(totalDistance, time.Now(), cmdFlags.duration)
+		records = jkwx.SmartCreateRecords(s.UserInfo, totalDistance, time.Now())
+	} else {
+		records = []jkwx.Record{
+			jkwx.CreateRecord(totalDistance, time.Now(), cmdFlags.duration),
+		}
 	}
 
 	fmt.Println("--------------")
@@ -174,7 +176,7 @@ func uploadData(s *jkwx.Session) {
 	if !cmdFlags.silent {
 		fmt.Println("请输入YES确认")
 		var confirm string
-		fmt.Scanf("%s", &confirm)
+		fmt.Scan(&confirm)
 		fmt.Println("---------------")
 		if confirm != "YES" {
 			return
@@ -199,7 +201,7 @@ func uploadData(s *jkwx.Session) {
 		if status == 1 {
 			fmt.Println("OK.")
 		} else {
-			fmt.Printf("Status %d", s)
+			fmt.Printf("Status %v", s)
 			hasError = true
 		}
 	}

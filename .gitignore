@@ -15,5 +15,5 @@ build/
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
 
-# pragram data
+# program data
 sunShine_Sports*.session

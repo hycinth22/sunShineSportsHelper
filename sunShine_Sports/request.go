@@ -139,13 +139,13 @@ type Record struct {
 	EndTime   time.Time
 }
 
-func CreateRawRecords(distance float64, beforeTime time.Time, duration time.Duration) []Record {
-	return []Record{{Distance: distance,
+func CreateRecord(distance float64, beforeTime time.Time, duration time.Duration) Record {
+	return Record{Distance: distance,
 		BeginTime: beforeTime.Add(-duration),
-		EndTime: beforeTime,
-	}}
+		EndTime:   beforeTime,
+	}
 }
-func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []Record {
+func SmartCreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []Record {
 	records := make([]Record, 0, int(distance/3))
 	remain := distance
 	lastBeginTime := beforeTime
@@ -161,7 +161,7 @@ func CreateRecords(userInfo UserInfo, distance float64, beforeTime time.Time) []
 			} else {
 				// 随机选择本条为最小限制距离，或者为下一条预留最小限制距离
 				// -0.1是为随机部分预留的
-				singleDistance = []float64{userInfo.LimitSingleDistance.Min, remain - userInfo.LimitSingleDistance.Min - 0.1} [utility.RandRange(0, 1)]
+				singleDistance = []float64{userInfo.LimitSingleDistance.Min, remain - userInfo.LimitSingleDistance.Min - 0.1}[utility.RandRange(0, 1)]
 			}
 		} else if remain > userInfo.LimitSingleDistance.Min && remain < userInfo.LimitSingleDistance.Max {
 			// 最后一条小于随机的最大值，但符合限制区间，直接使用
@@ -289,9 +289,9 @@ func UploadData(session *Session, distance float64, beginTime time.Time, endTime
 
 type SportResult struct {
 	Distance  float64 `json:"result"`
-	LastTime  string  `json:"lastTime`
-	Year      int     `json:"year`
-	Qualified float64 `json:"qualified`
+	LastTime  string  `json:"lastTime"`
+	Year      int     `json:"year"`
+	Qualified float64 `json:"qualified"`
 }
 
 func GetSportResult(session *Session) (r *SportResult, e error) {
