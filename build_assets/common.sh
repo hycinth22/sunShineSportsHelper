@@ -3,11 +3,14 @@
 # files
 main=$wd/jkwx
 today=`date +%Y-%m-%d`
-logFile=$wd/log/script_$today.log
+logDir=$wd/log/$today
+logFile=$logDir/summary.log
+userLogPathPattern=${logDir}/%s.log
 
-# create files
+# prepare files
+mkdir -p -m=664 $logDir
 touch $logFile
-chmod 777 $logFile
+chmod 664 $logFile
 
 # function signature: exec(user, pwd, dis)
 function execJKWX()
@@ -15,7 +18,7 @@ function execJKWX()
     user=$1
     pwd=$2
     dis=$3
-	log=$wd/log/script_${today}_${user}.log
+	log=`printf ${userLogPathPattern} ${user}`
     echo $user + `date` | tee -a ${log}
     $main -u $user -login -p $pwd | tee -a ${log}
     randomSleep 15 30
