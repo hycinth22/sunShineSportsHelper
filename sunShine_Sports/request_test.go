@@ -4,10 +4,24 @@ import (
 	"crypto/md5"
 	"fmt"
 	"testing"
+	"time"
 )
 
 var session *Session
 var loginErr error
+
+var fakeUserInfo = UserInfo{
+	Id:            666,
+	InClassName:   "haha",
+	StudentName:   "666",
+	StudentNumber: "6666",
+	Sex:           "F",
+	DistanceLimit: &DistanceParams{
+		RandDistance:        Float64Range{2.6, 4.0},
+		LimitSingleDistance: Float64Range{2.0, 4.0},
+		LimitTotalDistance:  Float64Range{2.0, 5.0},
+	},
+}
 
 func init() {
 	session, loginErr = Login("021640302", "123", fmt.Sprintf("%x", md5.Sum([]byte("123456"))))
@@ -15,6 +29,9 @@ func init() {
 func TestLogin(t *testing.T) {
 	// 已在init()中执行函数功能函数，此处仅检测结果
 	if loginErr != nil {
+		if HTTPErr, ok := loginErr.(HTTPError); ok {
+			t.Log(HTTPErr)
+		}
 		t.Fatalf("%v", loginErr)
 	}
 	t.Logf("%+v", session)
@@ -26,4 +43,11 @@ func TestGetSportResult(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 	t.Logf("%+v", r)
+}
+
+func TestSmartCreateRecords(t *testing.T) {
+	records := SmartCreateRecords(fakeUserInfo, 5, time.Now())
+	for _, r := range records {
+		t.Logf("%+v", r)
+	}
 }

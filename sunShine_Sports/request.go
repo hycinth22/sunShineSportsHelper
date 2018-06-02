@@ -214,9 +214,10 @@ func SmartCreateRecords(userInfo UserInfo, distance float64, beforeTime time.Tim
 			panic("Unknown Sex" + userInfo.Sex)
 		}
 		randomDuration = time.Duration(utility.RandRange(minMinuteDuration, maxMinuteDuration)) * time.Minute
-
 		randomDuration += time.Duration(utility.RandRange(0, 60)) * time.Second // 时间间隔秒级随机化
-		endTime := lastBeginTime.Add(-time.Duration(utility.RandRange(1, 10)) * time.Minute)
+
+		endTime := lastBeginTime.Add(-time.Duration(utility.RandRange(1, 30)) * time.Minute)
+		endTime = endTime.Add(-time.Duration(utility.RandRange(1, 60)) * time.Second)
 		beginTime := endTime.Add(-randomDuration)
 
 		records = append(records, Record{
