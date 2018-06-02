@@ -8,7 +8,11 @@ logFile=$logDir/summary.log
 userLogPathPattern=${logDir}/%s.log
 
 # prepare files
-mkdir -p -m=664 $logDir
+echo working at $wd
+echo today $today
+echo logDir $logDir
+echo logFile $logFile
+mkdir -p -m=777 $logDir
 touch $logFile
 chmod 664 $logFile
 
@@ -19,7 +23,9 @@ function execJKWX()
     pwd=$2
     dis=$3
 	log=`printf ${userLogPathPattern} ${user}`
+	echo user\'s logFile $log
     echo $user + `date` | tee -a ${log}
+
     $main -u $user -login -p $pwd | tee -a ${log}
     randomSleep 15 30
     # $main -status -u $user | tee -a ${log}
@@ -32,16 +38,16 @@ function execJKWX()
 	randomSleep 15 360
 }
 # function signature: rand(min, max)
-function rand(){  
-    min=$1  
-    max=$(($2-$min+1))  
-    num=$(cat /dev/urandom | head -n 10 | cksum | awk -F ' ' '{print $1}')  
-    echo $(($num%$max+$min))  
-}  
+function rand(){
+    min=$1
+    max=$(($2-$min+1))
+    num=$(cat /dev/urandom | head -n 10 | cksum | awk -F ' ' '{print $1}')
+    echo $(($num%$max+$min))
+}
 # function signature: randomSleep(min, max)
 function randomSleep()
 {
-    min=$1  
+    min=$1
     max=$2
     rnd=$(rand $min $max)
 	echo "Sleep ${rnd}s" |tee -a $logFile
