@@ -1,6 +1,8 @@
 package sunShine_Sports
 
 import (
+	"bytes"
+	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -258,15 +260,19 @@ func GetDistanceParams(s *Session) *DistanceParams {
 func UploadRecord(session *Session, record Record) (status int, e error) {
 	return UploadData(session, record.Distance, record.BeginTime, record.EndTime)
 }
-
-func UploadData(session *Session, distance float64, beginTime time.Time, endTime time.Time) (status int, e error) {
+func getTimeStr(t time.Time) string {
 	const timePattern = "2006-01-02 15:04:05"
+	return t.Format(timePattern)
+}
+func UploadData(session *Session, distance float64, beginTime time.Time, endTime time.Time) (status int, e error) {
+
 	req, err := http.NewRequest(http.MethodPost, uploadDataURL, strings.NewReader(url.Values{
 		"results":   {fmt.Sprintf("%07.6f", distance)},
-		"beginTime": {beginTime.Format(timePattern)},
-		"endTime":   {endTime.Format(timePattern)},
+		"beginTime": {getTimeStr(beginTime)},
+		"endTime":   {getTimeStr(endTime)},
 		"isValid":   {"1"},
 		"schoolId":  {schoolId},
+		"xtCode":    {GetXtcode(session.UserInfo.Id, getTimeStr(beginTime))},
 		"bz":        {""},
 	}.Encode()))
 	if err != nil {
@@ -277,7 +283,16 @@ func UploadData(session *Session, distance float64, beginTime time.Time, endTime
 	req.Header.Set("User-Agent", ua)
 	req.Header.Set("UserID", strconv.Itoa(session.UserID))
 	req.Header.Set("TokenID", session.TokenID)
+	//req.Header.Set("app", "com.ccxyct.sunshinemotion")
+	//req.Header.Set("ver", "2.0.1")
+	//req.Header.Set("device", "Android,24,7.0")
+	//req.Header.Set("model", "M5 Note")
+	//req.Header.Set("screen", "1080x1920")
+	//req.Header.Set("imei", "865964032623895")
+	//req.Header.Set("imsi", "460110101098930")
 	req.Header.Set("crack", "0")
+	//req.Header.Set("latitude", "0.0")
+	//req.Header.Set("longitude", "0.0")
 
 	resp, err := http.DefaultClient.Do(req)
 	if resp != nil && resp.Body != nil {
@@ -310,6 +325,21 @@ type SportResult struct {
 	LastTime  string  `json:"lastTime"`
 	Year      int     `json:"year"`
 	Qualified float64 `json:"qualified"`
+}
+
+func GetXtcode(userId int, beginTime string) string {
+	key := fmt.Sprintf("%x", md5.Sum([]byte(strconv.Itoa(userId)+beginTime+"stlchang")))
+
+	var xtCode bytes.Buffer
+	xtCode.WriteByte(key[7])
+	xtCode.WriteByte(key[3])
+	xtCode.WriteByte(key[15])
+	xtCode.WriteByte(key[24])
+	xtCode.WriteByte(key[9])
+	xtCode.WriteByte(key[17])
+	xtCode.WriteByte(key[29])
+	xtCode.WriteByte(key[23])
+	return xtCode.String()
 }
 
 func GetSportResult(session *Session) (r *SportResult, e error) {

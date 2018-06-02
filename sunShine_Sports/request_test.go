@@ -51,3 +51,10 @@ func TestSmartCreateRecords(t *testing.T) {
 		t.Logf("%+v", r)
 	}
 }
+
+func TestGetXtcode(t *testing.T) {
+	if r := GetXtcode(4290, "2018-06-02 11:13:40"); r != "5438d151" {
+		t.Log(r)
+		t.FailNow()
+	}
+}
