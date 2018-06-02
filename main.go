@@ -201,7 +201,7 @@ func uploadData(s *jkwx.Session) {
 		if status == 1 {
 			fmt.Println("OK.")
 		} else {
-			fmt.Printf("Status %v", s)
+			fmt.Printf("Status %v", status)
 			hasError = true
 		}
 	}
