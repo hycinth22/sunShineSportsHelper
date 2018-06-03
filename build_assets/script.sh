@@ -15,8 +15,8 @@ echo "----------------" | tee -a $logFile
 # read each and call execJKWX
 while read user passwd distance
 do
-    echo "$user $passwd $distance"
-      execJKWX $user $passwd $distance
+    echo "$user $passwd $distance"|tee -a $logFile
+    execJKWX $user $passwd $distance
 done < accounts.list
 
 # recover previous workDir
