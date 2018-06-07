@@ -23,6 +23,9 @@ func saveSession(s *jkwx.Session) {
 		panic("try to save nil session")
 	}
 	f, err := os.Create(getSessionFilePath(s))
+	if f != nil {
+		defer f.Close()
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -33,6 +36,9 @@ func saveSession(s *jkwx.Session) {
 }
 func readSession(stuNu string) *jkwx.Session {
 	f, err := os.Open(getSessionFilePathById(stuNu))
+	if f != nil {
+		defer f.Close()
+	}
 	if os.IsNotExist(err) {
 		return nil
 	}
