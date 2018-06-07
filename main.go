@@ -67,15 +67,10 @@ func main() {
 		loginAccount()
 	default:
 		// need session
-		s := readSession(cmdFlags.user)
+		s := tryResume()
 		if s == nil {
 			fmt.Println("Need to login.")
 			return
-		} else {
-			fmt.Println("Use Existent Session.")
-			fmt.Println("UserAgent", s.UserAgent)
-			fmt.Println("expiredTime", s.UserExpirationTime.Format(timePattern))
-			fmt.Println()
 		}
 		showStatus(s)
 		switch {
@@ -85,13 +80,29 @@ func main() {
 	}
 }
 
+func tryResume() *jkwx.Session {
+	defer func() {
+		if err, ok := recover().(error); ok {
+			fmt.Println("Reusme failed.", err.Error())
+			fmt.Println("** You can try to delete the session file ", getSessionFilePathById(cmdFlags.user))
+		}
+	}()
+	s, _ := readSession(cmdFlags.user)
+	if s != nil {
+		fmt.Println("Use Existent Session.")
+		fmt.Println("UserAgent", s.UserAgent)
+		fmt.Println("expiredTime", s.UserExpirationTime.Format(timePattern))
+		fmt.Println()
+	}
+	return s
+}
+
 func printHelp() {
 	flag.Usage()
 	os.Exit(0)
 }
 func loginAccount() {
-	var s *jkwx.Session
-	s = readSession(cmdFlags.user)
+	s, _ := readSession(cmdFlags.user)
 	if s != nil {
 		fmt.Println("Alread Login.")
 		return

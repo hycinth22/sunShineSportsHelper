@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -12,12 +13,18 @@ import (
 
 const sessionFileFormat = "sunShine_Sports_%s.session"
 
+var (
+	ErrSessionNotExist = errors.New("session does not exist")
+)
+
 func getSessionFilePath(s *jkwx.Session) string {
 	return getSessionFilePathById(s.UserInfo.StudentNumber)
 }
+
 func getSessionFilePathById(stuNum string) string {
 	return fmt.Sprintf(sessionFileFormat, stuNum)
 }
+
 func saveSession(s *jkwx.Session) {
 	if s == nil {
 		panic("try to save nil session")
@@ -34,13 +41,14 @@ func saveSession(s *jkwx.Session) {
 		panic(err)
 	}
 }
-func readSession(stuNu string) *jkwx.Session {
+
+func readSession(stuNu string) (*jkwx.Session, error) {
 	f, err := os.Open(getSessionFilePathById(stuNu))
 	if f != nil {
 		defer f.Close()
 	}
 	if os.IsNotExist(err) {
-		return nil
+		return nil, ErrSessionNotExist
 	}
 	if err != nil {
 		panic(err)
@@ -59,8 +67,17 @@ func readSession(stuNu string) *jkwx.Session {
 	s.UpdateLimitParams()
 
 	if time.Now().After(s.UserExpirationTime) {
+		removeSession(stuNu)
 		fmt.Println("Login Expired.")
-		return nil
+		return nil, ErrSessionNotExist
 	}
-	return s
+	return s, nil
+}
+
+func removeSession(stuNum string) error {
+	err := os.Remove(getSessionFilePathById(stuNum))
+	if os.IsNotExist(err) {
+		return ErrSessionNotExist
+	}
+	return err
 }
