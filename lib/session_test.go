@@ -1,4 +1,4 @@
-package sunShine_Sports
+package lib
 
 import (
 	"crypto/md5"
@@ -10,21 +10,9 @@ import (
 var session *Session
 var loginErr error
 
-var fakeUserInfo = UserInfo{
-	Id:            666,
-	InClassName:   "haha",
-	StudentName:   "666",
-	StudentNumber: "6666",
-	Sex:           "F",
-	DistanceLimit: &DistanceParams{
-		RandDistance:        Float64Range{2.6, 4.0},
-		LimitSingleDistance: Float64Range{2.0, 4.0},
-		LimitTotalDistance:  Float64Range{2.0, 5.0},
-	},
-}
-
 func init() {
-	session, loginErr = Login("021640302", "123", fmt.Sprintf("%x", md5.Sum([]byte("123456"))))
+	session = CreateSession()
+	loginErr = session.Login("021640302", "123", fmt.Sprintf("%x", md5.Sum([]byte("123456"))))
 }
 func TestLogin(t *testing.T) {
 	// 已在init()中执行函数功能函数，此处仅检测结果
@@ -38,7 +26,7 @@ func TestLogin(t *testing.T) {
 }
 
 func TestGetSportResult(t *testing.T) {
-	r, err := GetSportResult(session)
+	r, err := session.GetSportResult()
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -46,7 +34,12 @@ func TestGetSportResult(t *testing.T) {
 }
 
 func TestSmartCreateRecords(t *testing.T) {
-	records := SmartCreateRecords(fakeUserInfo, 5, time.Now())
+	records := SmartCreateRecords(&LimitParams{
+		RandDistance:        Float64Range{2.6, 4.0},
+		LimitSingleDistance: Float64Range{2.0, 4.0},
+		LimitTotalDistance:  Float64Range{2.0, 5.0},
+		MinuteDuration:      IntRange{11, 20},
+	}, 5, time.Now())
 	for _, r := range records {
 		t.Logf("%+v", r)
 	}

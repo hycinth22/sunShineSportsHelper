@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	jkwx "./sunShine_Sports"
+	jkwx "./lib"
 	"./utility"
 )
 
@@ -44,7 +44,7 @@ func init() {
 
 	flag.BoolVar(&cmdFlags.login, "login", false, "login into account")
 	flag.BoolVar(&cmdFlags.forceLogin, "forceLogin", false, "login into account(not use existent session)")
-	flag.StringVar(&cmdFlags.user, "u", defaultStuNum, "account(stuNum)")
+	flag.StringVar(&cmdFlags.user, "u", "default", "account(stuNum)")
 	flag.StringVar(&cmdFlags.password, "p", "", "password")
 
 	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
@@ -67,10 +67,15 @@ func main() {
 		loginAccount()
 	default:
 		// need session
-		s := readSessionById(cmdFlags.user)
+		s := readSession(cmdFlags.user)
 		if s == nil {
 			fmt.Println("Need to login.")
 			return
+		} else {
+			fmt.Println("Use Existent Session.")
+			fmt.Println("UserAgent", s.UserAgent)
+			fmt.Println("expiredTime", s.UserExpirationTime.Format(timePattern))
+			fmt.Println()
 		}
 		showStatus(s)
 		switch {
@@ -86,13 +91,13 @@ func printHelp() {
 }
 func loginAccount() {
 	var s *jkwx.Session
-	s = readSessionById(cmdFlags.user)
+	s = readSession(cmdFlags.user)
 	if s != nil {
 		fmt.Println("Alread Login.")
 		return
 	} else {
-		var err error
-		s, err = jkwx.Login(cmdFlags.user, "123", fmt.Sprintf("%x", md5.Sum([]byte(cmdFlags.password))))
+		s = jkwx.CreateSession()
+		err := s.Login(cmdFlags.user, "123", fmt.Sprintf("%x", md5.Sum([]byte(cmdFlags.password))))
 		if err != nil {
 			fmt.Println(err.Error())
 			return
@@ -104,7 +109,7 @@ func loginAccount() {
 }
 func showStatus(s *jkwx.Session) {
 	// TODO
-	r, err := jkwx.GetSportResult(s)
+	r, err := s.GetSportResult()
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -140,20 +145,20 @@ func uploadData(s *jkwx.Session) {
 
 	var records []jkwx.Record
 	if !cmdFlags.rawRecord {
-		if totalDistance < s.UserInfo.DistanceLimit.LimitTotalDistance.Min || totalDistance > s.UserInfo.DistanceLimit.LimitTotalDistance.Max {
-			fmt.Printf("超出限制的总距离（%f - %f）\n", s.UserInfo.DistanceLimit.LimitTotalDistance.Min, s.UserInfo.DistanceLimit.LimitTotalDistance.Max)
+		if totalDistance < s.LimitParams.LimitTotalDistance.Min || totalDistance > s.LimitParams.LimitTotalDistance.Max {
+			fmt.Printf("超出限制的总距离（%f - %f）\n", s.LimitParams.LimitTotalDistance.Min, s.LimitParams.LimitTotalDistance.Max)
 			return
 		}
 
 		if !ignoreCompleted {
-			r, err := jkwx.GetSportResult(s)
+			r, err := s.GetSportResult()
 			if err == nil && r.Distance > r.Qualified {
 				fmt.Println("已达标，停止操作")
 
 				return
 			}
 		}
-		records = jkwx.SmartCreateRecords(s.UserInfo, totalDistance, time.Now())
+		records = jkwx.SmartCreateRecords(s.LimitParams, totalDistance, time.Now())
 	} else {
 		records = []jkwx.Record{
 			jkwx.CreateRecord(totalDistance, time.Now(), cmdFlags.duration),
@@ -183,35 +188,29 @@ func uploadData(s *jkwx.Session) {
 		}
 	}
 
-	jkwx.SetUserAgent(s.UserAgent)
-	allStatus := make([]int, len(records))
+	allErr := make([]error, len(records))
 	for i, record := range records {
-		var err error
-		allStatus[i], err = jkwx.UploadRecord(s, record)
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
+		allErr[i] = s.UploadRecord(record)
 	}
 
 	fmt.Println("---------------")
 	fmt.Println("上传结果：")
-	hasError := false
-	for _, status := range allStatus {
-		if status == 1 {
+	for _, err := range allErr {
+		switch err {
+		case nil:
 			fmt.Println("OK.")
-		} else {
-			fmt.Printf("Status %v", status)
-			hasError = true
-		}
-	}
-	if !hasError {
-		showStatus(s)
-		if !ignoreCompleted {
-			r, err := jkwx.GetSportResult(s)
-			if err == nil && r.Distance > r.Qualified {
-				fmt.Println("已达标")
+			showStatus(s)
+			if !ignoreCompleted {
+				r, err := s.GetSportResult()
+				if err == nil && r.Distance > r.Qualified {
+					fmt.Println("已达标")
+				}
 			}
+		case jkwx.ErrIllegalData:
+			fmt.Println("非法数据.")
+			fallthrough
+		default:
+			fmt.Println(err.Error())
 		}
 	}
 	fmt.Println("---------------")

@@ -6,12 +6,11 @@ import (
 	"os"
 	"time"
 
-	jkwx "./sunShine_Sports"
+	jkwx "./lib"
 	"./utility"
 )
 
 const sessionFileFormat = "sunShine_Sports_%s.session"
-const defaultStuNum = "default" //用于未输入user时的默认参数名
 
 func getSessionFilePath(s *jkwx.Session) string {
 	return getSessionFilePathById(s.UserInfo.StudentNumber)
@@ -20,26 +19,30 @@ func getSessionFilePathById(stuNum string) string {
 	return fmt.Sprintf(sessionFileFormat, stuNum)
 }
 func saveSession(s *jkwx.Session) {
+	if s == nil {
+		panic("try to save nil session")
+	}
 	f, err := os.Create(getSessionFilePath(s))
 	if err != nil {
 		panic(err)
 	}
+	// TODO: 数据文件版本号
 	if err := gob.NewEncoder(f).Encode(s); err != nil {
 		panic(err)
 	}
 }
-func _() *jkwx.Session {
-	return readSessionById(defaultStuNum)
-}
-func readSessionById(stuNu string) *jkwx.Session {
+func readSession(stuNu string) *jkwx.Session {
 	f, err := os.Open(getSessionFilePathById(stuNu))
-	if err != nil {
+	if os.IsNotExist(err) {
 		return nil
 	}
+	if err != nil {
+		panic(err)
+	}
 	s := new(jkwx.Session)
+	// TODO: 数据文件版本号
 	if err := gob.NewDecoder(f).Decode(s); err != nil {
-		fmt.Println(err.Error())
-		return nil
+		panic(err)
 	}
 	if s.UserAgent == "" {
 		fmt.Println("Upgrade session file from old version (before 2.0)")
@@ -47,15 +50,9 @@ func readSessionById(stuNu string) *jkwx.Session {
 		s.UserAgent = utility.GetRandUserAgent()
 		saveSession(s)
 	}
-	s.UserInfo.DistanceLimit = jkwx.GetDistanceParams(s)
-	nowTime := time.Now()
-	expiredTime := time.Unix(s.UserExpirationTime/1000, 0)
-	fmt.Println("Use Existent Session.")
-	fmt.Println("UserAgent", s.UserAgent)
-	fmt.Println("nowTime", nowTime.Format(timePattern))
-	fmt.Println("expiredTime", expiredTime.Format(timePattern))
-	fmt.Println()
-	if nowTime.After(expiredTime) {
+	s.UpdateLimitParams()
+
+	if time.Now().After(s.UserExpirationTime) {
 		fmt.Println("Login Expired.")
 		return nil
 	}
