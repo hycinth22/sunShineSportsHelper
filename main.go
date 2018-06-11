@@ -163,7 +163,7 @@ func uploadData(s *jkwx.Session) {
 
 		if !ignoreCompleted {
 			r, err := s.GetSportResult()
-			if err == nil && r.Distance > r.Qualified {
+			if err == nil && r.Distance >= r.Qualified {
 				fmt.Println("已达标，停止操作")
 
 				return
