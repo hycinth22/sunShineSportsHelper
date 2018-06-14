@@ -135,8 +135,8 @@ func showStatus(s *jkwx.Session) {
 	fmt.Println("性别：\t", s.UserInfo.Sex)
 	fmt.Println("-----------")
 	fmt.Printf("LastTime：\t%s \n", r.LastTime)
-	fmt.Printf("已跑距离：\t%07.6f 公里\n", r.Distance)
-	fmt.Printf("达标距离：\t%07.6f 公里\n", r.Qualified)
+	fmt.Printf("已跑距离：\t%05.2f 公里\n", r.Distance)
+	fmt.Printf("达标距离：\t%05.2f 公里\n", r.Qualified)
 	fmt.Println("-----------")
 	// fmt.Printf("%+v", r)
 }
