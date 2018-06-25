@@ -166,17 +166,17 @@ func (s *Session) UploadData(distance float64, beginTime time.Time, endTime time
 		panic(fmt.Errorf("HTTP Read Resp Failed! %s", err.Error()))
 	}
 
-	const successCode = 1
-	var respMsg struct {
+	var uploadResult struct {
 		Status       int
 		ErrorMessage string
 	}
-	err = json.Unmarshal(respBytes, &respMsg)
+	err = json.Unmarshal(respBytes, &uploadResult)
 	if err != nil {
 		panic(fmt.Errorf("reslove Failed. %s %s", err.Error(), string(respBytes)))
 	}
-	if respMsg.Status != successCode {
-		return fmt.Errorf("server status %d , message: %s", respMsg.Status, respMsg.ErrorMessage)
+	const successCode = 1
+	if uploadResult.Status != successCode {
+		return fmt.Errorf("server status %d , message: %s", uploadResult.Status, uploadResult.ErrorMessage)
 	}
 	return nil
 }
@@ -241,6 +241,10 @@ func (s *Session) GetSportResult() (r *SportResult, e error) {
 	err = json.Unmarshal(respBytes, &httpSporstResult)
 	if err != nil {
 		return nil, fmt.Errorf("reslove Failed. %s %s", err.Error(), string(respBytes))
+	}
+	const successCode = 1
+	if httpSporstResult.Status != successCode {
+		return nil, fmt.Errorf("server status %d , message: %s", httpSporstResult.Status, httpSporstResult.ErrorMessage)
 	}
 	r = new(SportResult)
 	r.LastTime, err = fromHTTPTimeStr(httpSporstResult.LastTime)

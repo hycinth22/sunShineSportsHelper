@@ -119,7 +119,6 @@ func loginAccount() {
 	showStatus(s)
 }
 func showStatus(s *jkwx.Session) {
-	// TODO
 	r, err := s.GetSportResult()
 	if err != nil {
 		fmt.Println(err.Error())
