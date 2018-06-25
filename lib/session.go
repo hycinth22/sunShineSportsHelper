@@ -1,8 +1,9 @@
 package lib
 
 import (
+	"bytes"
+	"crypto/md5"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,52 +14,19 @@ import (
 )
 
 type Session struct {
-	UserID             int
+	UserID             int64
 	TokenID            string
 	UserExpirationTime time.Time
 	UserInfo           UserInfo
 	UserAgent          string
 	LimitParams        *LimitParams
 }
-type LimitParams struct {
-	// 随机区间（生成记录随机的单次距离区间）
-	RandDistance Float64Range
-	// 限制区间（目标系统限制的单次距离区间）
-	LimitSingleDistance Float64Range
-	// 限制区间（目标系统限制的总距离区间）
-	LimitTotalDistance Float64Range
-	// 每条记录的时间区间
-	MinuteDuration IntRange
-}
-
-type UserInfo struct {
-	Id            int    `json:"id"`
-	InClassID     int    `json:"inClassID"`
-	InClassName   string `json:"inClassName"`
-	InCollegeID   int    `json:"inCollegeID"`
-	InCollegeName string `json:"inCollegeName"`
-	IsTeacher     int    `json:"isTeacher"`
-	NickName      string `json:"nickName"`
-	PhoneNumber   string `json:"phoneNumber"`
-	Sex           string `json:"sex"`
-	StudentName   string `json:"studentName"`
-	StudentNumber string `json:"studentNumber"`
-	// UserRoleID    int
-}
-type Float64Range struct {
-	Min float64
-	Max float64
-}
-type IntRange struct {
-	Min int
-	Max int
-}
-type HTTPError struct {
+type httpError struct {
 	msg     string
 	httpErr error
 }
 
-func (e HTTPError) Error() string {
+func (e httpError) Error() string {
 	return e.msg + "\n" + e.httpErr.Error()
 }
 
@@ -70,11 +38,6 @@ const (
 	DefaultUserAgent  = "Dalvik/2.1.0 (Linux; U; Android 7.0)"
 
 	schoolId = "60"
-)
-
-var (
-	ErrIncorrectAccount = errors.New("account or password is INCORRECT")
-	ErrIllegalData      = errors.New("illegal data")
 )
 
 func CreateSession() *Session {
@@ -91,7 +54,7 @@ func (s *Session) Login(stuNum string, phoneNum string, passwordHash string) (e 
 		"token":    {""},
 	}.Encode()))
 	if err != nil {
-		return HTTPError{"HTTP Create Request Failed.", err}
+		return httpError{"HTTP Create Request Failed.", err}
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -104,7 +67,7 @@ func (s *Session) Login(stuNum string, phoneNum string, passwordHash string) (e 
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		return HTTPError{"HTTP Send Request Failed! ", err}
+		return httpError{"HTTP Send Request Failed! ", err}
 	}
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("HTTP Response Status: %d(%s)", resp.StatusCode, http.StatusText(resp.StatusCode))
@@ -114,25 +77,21 @@ func (s *Session) Login(stuNum string, phoneNum string, passwordHash string) (e 
 		return fmt.Errorf("HTTP Read Resp Failed! %s", err.Error())
 	}
 
-	var respMsg struct {
-		Status             int
-		Date               string
-		UserInfo           UserInfo
+	var loginResult struct {
+		Status             int64
+		UserID             int64
 		TokenID            string
 		UserExpirationTime int64
-		UserID             int
+		UserInfo           UserInfo
 	}
-	err = json.Unmarshal(respBytes, &respMsg)
+	err = json.Unmarshal(respBytes, &loginResult)
 	if err != nil {
 		return fmt.Errorf("reslove Failed. %s %s", err.Error(), string(respBytes))
 	}
-	if respMsg.Status == 0 {
-		return ErrIncorrectAccount
+	if loginResult.Status != 1 {
+		return fmt.Errorf("resp status not ok. %d", loginResult.Status)
 	}
-	if respMsg.Status != 1 {
-		return fmt.Errorf("resp status not ok. %d", respMsg.Status)
-	}
-	s.UserID, s.TokenID, s.UserExpirationTime, s.UserInfo = respMsg.UserID, respMsg.TokenID, time.Unix(respMsg.UserExpirationTime/1000, 0), respMsg.UserInfo
+	s.UserID, s.TokenID, s.UserExpirationTime, s.UserInfo = loginResult.UserID, loginResult.TokenID, time.Unix(loginResult.UserExpirationTime/1000, 0), loginResult.UserInfo
 	s.UpdateLimitParams()
 	return nil
 }
@@ -161,26 +120,25 @@ func (s *Session) UpdateLimitParams() {
 	}
 }
 func (s *Session) UploadRecord(record Record) (e error) {
-	return s.UploadData(record.Distance, record.BeginTime, record.EndTime)
+	return s.UploadData(record.Distance, record.BeginTime, record.EndTime, GetXtcode(s.UserID, toHTTPTimeStr(record.BeginTime)))
 }
-
-func (s *Session) UploadData(distance float64, beginTime time.Time, endTime time.Time) (e error) {
+func (s *Session) UploadData(distance float64, beginTime time.Time, endTime time.Time, xtCode string) (e error) {
 	req, err := http.NewRequest(http.MethodPost, uploadDataURL, strings.NewReader(url.Values{
 		"results":   {fmt.Sprintf("%07.6f", distance)},
-		"beginTime": {getTimeStr(beginTime)},
-		"endTime":   {getTimeStr(endTime)},
+		"beginTime": {toHTTPTimeStr(beginTime)},
+		"endTime":   {toHTTPTimeStr(endTime)},
 		"isValid":   {"1"},
 		"schoolId":  {schoolId},
-		"xtCode":    {GetXtcode(s.UserInfo.Id, getTimeStr(beginTime))},
+		"xtCode":    {xtCode},
 		"bz":        {""},
 	}.Encode()))
 	if err != nil {
-		return HTTPError{"HTTP Create Request Failed.", err}
+		panic(httpError{"HTTP Create Request Failed.", err})
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("User-Agent", s.UserAgent)
-	req.Header.Set("UserID", strconv.Itoa(s.UserID))
+	req.Header.Set("UserID", strconv.FormatInt(s.UserID, 10))
 	req.Header.Set("TokenID", s.TokenID)
 	req.Header.Set("app", "com.ccxyct.sunshinemotion")
 	req.Header.Set("ver", "2.0.1")
@@ -198,38 +156,50 @@ func (s *Session) UploadData(distance float64, beginTime time.Time, endTime time
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		return fmt.Errorf("HTTP Send Request Failed! %s", err.Error())
+		panic(fmt.Errorf("HTTP Send Request Failed! %s", err.Error()))
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("HTTP Get Failed Resp! %s", http.StatusText(resp.StatusCode))
+		panic(fmt.Errorf("HTTP Get Failed Resp! %s", http.StatusText(resp.StatusCode)))
 	}
 	respBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("HTTP Read Resp Failed! %s", err.Error())
+		panic(fmt.Errorf("HTTP Read Resp Failed! %s", err.Error()))
 	}
 
+	const successCode = 1
 	var respMsg struct {
-		Status int
+		Status       int
+		ErrorMessage string
 	}
 	err = json.Unmarshal(respBytes, &respMsg)
 	if err != nil {
-		return fmt.Errorf("reslove Failed. %s %s", err.Error(), string(respBytes))
+		panic(fmt.Errorf("reslove Failed. %s %s", err.Error(), string(respBytes)))
 	}
-	switch respMsg.Status {
-	case 10001:
-		return ErrIllegalData
-	case 1:
-		return nil // success
-	default:
-		return fmt.Errorf("server return unknown status %d ", respMsg.Status)
+	if respMsg.Status != successCode {
+		return fmt.Errorf("server status %d , message: %s", respMsg.Status, respMsg.ErrorMessage)
 	}
+	return nil
+}
+
+func GetXtcode(userId int64, beginTime string) string {
+	key := fmt.Sprintf("%x", md5.Sum([]byte(strconv.FormatInt(userId, 10)+beginTime+"stlchang")))
+
+	var xtCode bytes.Buffer
+	xtCode.WriteByte(key[7])
+	xtCode.WriteByte(key[3])
+	xtCode.WriteByte(key[15])
+	xtCode.WriteByte(key[24])
+	xtCode.WriteByte(key[9])
+	xtCode.WriteByte(key[17])
+	xtCode.WriteByte(key[29])
+	xtCode.WriteByte(key[23])
+	return xtCode.String()
 }
 
 type SportResult struct {
-	Distance  float64 `json:"result"`
-	LastTime  string  `json:"lastTime"`
-	Year      int     `json:"year"`
-	Qualified float64 `json:"qualified"`
+	LastTime  time.Time
+	Qualified float64
+	Distance  float64
 }
 
 func (s *Session) GetSportResult() (r *SportResult, e error) {
@@ -240,7 +210,7 @@ func (s *Session) GetSportResult() (r *SportResult, e error) {
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("User-Agent", s.UserAgent)
-	req.Header.Set("UserID", strconv.Itoa(s.UserID))
+	req.Header.Set("UserID", strconv.FormatInt(s.UserID, 10))
 	req.Header.Set("TokenID", s.TokenID)
 	req.Header.Set("crack", "0")
 
@@ -258,10 +228,26 @@ func (s *Session) GetSportResult() (r *SportResult, e error) {
 	if err != nil {
 		return nil, fmt.Errorf("HTTP Read Resp Failed! %s", err.Error())
 	}
-	var respMsg SportResult
-	err = json.Unmarshal(respBytes, &respMsg)
+	var httpSporstResult struct {
+		Status       int
+		ErrorMessage string
+		LastTime     string  `json:"lastTime"`
+		Qualified    float64 `json:"qualified"`
+		Result       float64 `json:"result"`
+		UserID       int64   `json:"userID"`
+		Term         string  `json:"term"`
+		Year         int     `json:"year"`
+	}
+	err = json.Unmarshal(respBytes, &httpSporstResult)
 	if err != nil {
 		return nil, fmt.Errorf("reslove Failed. %s %s", err.Error(), string(respBytes))
 	}
-	return &respMsg, nil
+	r = new(SportResult)
+	r.LastTime, err = fromHTTPTimeStr(httpSporstResult.LastTime)
+	if err != nil {
+		panic(err)
+	}
+	r.Qualified = httpSporstResult.Qualified
+	r.Distance = httpSporstResult.Result
+	return r, nil
 }

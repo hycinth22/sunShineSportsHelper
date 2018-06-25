@@ -1,15 +1,18 @@
 package lib
 
 import (
-	"bytes"
-	"crypto/md5"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"../utility"
 )
+
+type Record struct {
+	Distance  float64
+	BeginTime time.Time
+	EndTime   time.Time
+}
 
 func SmartCreateRecords(limitParams *LimitParams, distance float64, beforeTime time.Time) []Record {
 	records := make([]Record, 0, int(distance/3))
@@ -88,29 +91,4 @@ func CreateRecord(distance float64, beforeTime time.Time, duration time.Duration
 		BeginTime: beforeTime.Add(-duration),
 		EndTime:   beforeTime,
 	}
-}
-
-type Record struct {
-	Distance  float64
-	BeginTime time.Time
-	EndTime   time.Time
-}
-
-func GetXtcode(userId int, beginTime string) string {
-	key := fmt.Sprintf("%x", md5.Sum([]byte(strconv.Itoa(userId)+beginTime+"stlchang")))
-
-	var xtCode bytes.Buffer
-	xtCode.WriteByte(key[7])
-	xtCode.WriteByte(key[3])
-	xtCode.WriteByte(key[15])
-	xtCode.WriteByte(key[24])
-	xtCode.WriteByte(key[9])
-	xtCode.WriteByte(key[17])
-	xtCode.WriteByte(key[29])
-	xtCode.WriteByte(key[23])
-	return xtCode.String()
-}
-func getTimeStr(t time.Time) string {
-	const timePattern = "2006-01-02 15:04:05"
-	return t.Format(timePattern)
 }

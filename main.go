@@ -12,8 +12,6 @@ import (
 	"./utility"
 )
 
-const timePattern = "2006-01-02 15:04:05"
-
 var cmdFlags struct {
 	help bool
 
@@ -36,6 +34,8 @@ var cmdFlags struct {
 const (
 	defaultDistanceFemale = 2.5
 	defaultDistanceMale   = 4.5
+
+	displayTimePattern = "2006-01-02 15:04"
 )
 
 func init() {
@@ -91,7 +91,7 @@ func tryResume() *jkwx.Session {
 	if s != nil {
 		fmt.Println("Use Existent Session.")
 		fmt.Println("UserAgent", s.UserAgent)
-		fmt.Println("expiredTime", s.UserExpirationTime.Format(timePattern))
+		fmt.Println("expiredTime", s.UserExpirationTime.Format(displayTimePattern))
 		fmt.Println()
 	}
 	return s
@@ -128,13 +128,13 @@ func showStatus(s *jkwx.Session) {
 	fmt.Println("-----------")
 	fmt.Println("| 帐号信息 |")
 	fmt.Println("-----------")
-	fmt.Println("ID：\t", s.UserInfo.Id)
+	fmt.Println("ID：\t", s.UserID)
 	fmt.Println("班级：\t", s.UserInfo.InClassName)
 	fmt.Println("学号：\t", s.UserInfo.StudentNumber)
 	fmt.Println("姓名：\t", s.UserInfo.StudentName)
 	fmt.Println("性别：\t", s.UserInfo.Sex)
 	fmt.Println("-----------")
-	fmt.Printf("LastTime：\t%s \n", r.LastTime)
+	fmt.Printf("LastTime：\t%s \n", r.LastTime.Format(displayTimePattern))
 	fmt.Printf("已跑距离：\t%05.2f 公里\n", r.Distance)
 	fmt.Printf("达标距离：\t%05.2f 公里\n", r.Qualified)
 	fmt.Println("-----------")
@@ -184,9 +184,9 @@ func uploadData(s *jkwx.Session) {
 		duration := record.EndTime.Sub(record.BeginTime)
 		v := record.Distance * 1000 / duration.Seconds()
 		fmt.Println("第", i+1, "条")
-		fmt.Println("起始时间：", record.BeginTime.Format(timePattern))
-		fmt.Println("结束时间：", record.EndTime.Format(timePattern))
-		fmt.Printf("用时%s内完成%.6f公里距离，速度约为%.2fm/s \n", duration, distance, v)
+		fmt.Println("起始时间：", record.BeginTime.Format(displayTimePattern))
+		fmt.Println("结束时间：", record.EndTime.Format(displayTimePattern))
+		fmt.Printf("用时%s内完成%.2f公里距离，速度约为%.2fm/s \n", duration, distance, v)
 	}
 
 	if !cmdFlags.silent {
@@ -207,21 +207,17 @@ func uploadData(s *jkwx.Session) {
 	fmt.Println("---------------")
 	fmt.Println("上传结果：")
 	for _, err := range allErr {
-		switch err {
-		case nil:
+		if err == nil {
 			fmt.Println("OK.")
-			showStatus(s)
-			if !ignoreCompleted {
-				r, err := s.GetSportResult()
-				if err == nil && r.Distance > r.Qualified {
-					fmt.Println("已达标")
-				}
-			}
-		case jkwx.ErrIllegalData:
-			fmt.Println("非法数据.")
-			fallthrough
-		default:
+		} else {
 			fmt.Println(err.Error())
+		}
+	}
+	showStatus(s)
+	if !ignoreCompleted {
+		r, err := s.GetSportResult()
+		if err == nil && r.Distance >= r.Qualified {
+			fmt.Println("已达标")
 		}
 	}
 	fmt.Println("---------------")
