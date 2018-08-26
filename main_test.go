@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"./utility"
+	"inkedawn/sunShineSportsHelper/utility"
 )
 
 func TestTime(t *testing.T) {

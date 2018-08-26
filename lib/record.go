@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"../utility"
+	"inkedawn/sunShineSportsHelper/utility"
 )
 
 type Record struct {

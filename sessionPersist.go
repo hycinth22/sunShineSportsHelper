@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	jkwx "./lib"
-	"./utility"
+	jkwx "inkedawn/sunShineSportsHelper/lib"
+	"inkedawn/sunShineSportsHelper/utility"
 )
 
 const sessionFileFormat = "sunShine_Sports_%s.session"

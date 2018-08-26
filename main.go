@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	jkwx "./lib"
-	"./utility"
+	jkwx "inkedawn/sunShineSportsHelper/lib"
+	"inkedawn/sunShineSportsHelper/utility"
 )
 
 var cmdFlags struct {
