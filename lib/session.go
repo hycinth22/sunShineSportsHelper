@@ -1,8 +1,6 @@
 package lib
 
 import (
-	"bytes"
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -121,13 +119,13 @@ func (s *Session) UpdateLimitParams() {
 	}
 }
 func (s *Session) UploadRecord(record Record) (e error) {
-	return s.UploadData(record.Distance, record.BeginTime, record.EndTime, GetXtcodeV2(s.UserID, toHTTPTimeStr(record.BeginTime), fmt.Sprintf("%.3f", record.Distance)))
+	return s.UploadData(record.Distance, record.BeginTime, record.EndTime, record.XTcode)
 }
 func (s *Session) UploadData(distance float64, beginTime time.Time, endTime time.Time, xtCode string) (e error) {
 	req, err := http.NewRequest(http.MethodPost, uploadDataURL, strings.NewReader(url.Values{
-		"results":   {fmt.Sprintf("%.3f", distance)},
-		"beginTime": {toHTTPTimeStr(beginTime)},
-		"endTime":   {toHTTPTimeStr(endTime)},
+		"results":   {toExchangeDistanceStr(distance)},
+		"beginTime": {toExchangeTimeStr(beginTime)},
+		"endTime":   {toExchangeTimeStr(endTime)},
 		"isValid":   {"1"},
 		"schoolId":  {schoolId},
 		"xtCode":    {xtCode},
@@ -145,8 +143,8 @@ func (s *Session) UploadData(distance float64, beginTime time.Time, endTime time
 	req.Header.Set("device", "Android,24,7.0")
 	req.Header.Set("model", "Android")
 	req.Header.Set("screen", "1080x1920")
-	req.Header.Set("imei", "000000000000000")
-	req.Header.Set("imsi", "000000000000000")
+	req.Header.Set("imei", "")
+	req.Header.Set("imsi", "")
 	req.Header.Set("crack", "0")
 	req.Header.Set("latitude", "0.0")
 	req.Header.Set("longitude", "0.0")
@@ -180,36 +178,6 @@ func (s *Session) UploadData(distance float64, beginTime time.Time, endTime time
 		return fmt.Errorf("server status %d , message: %s", uploadResult.Status, uploadResult.ErrorMessage)
 	}
 	return nil
-}
-
-func GetXtcode(userId int64, beginTime string) string {
-	key := fmt.Sprintf("%x", md5.Sum([]byte(strconv.FormatInt(userId, 10)+beginTime+"stlchang")))
-	var xtCode bytes.Buffer
-	xtCode.WriteByte(key[7])
-	xtCode.WriteByte(key[3])
-	xtCode.WriteByte(key[15])
-	xtCode.WriteByte(key[24])
-	xtCode.WriteByte(key[9])
-	xtCode.WriteByte(key[17])
-	xtCode.WriteByte(key[29])
-	xtCode.WriteByte(key[23])
-	return xtCode.String()
-}
-
-func GetXtcodeV2(userId int64, beginTime string, distance string) string {
-	phrase := strconv.FormatInt(userId, 10) + beginTime + distance + "stlchang"
-	key := fmt.Sprintf("%x", md5.Sum([]byte(phrase)))
-	log.Println(phrase, key)
-	var xtCode bytes.Buffer
-	xtCode.WriteByte(key[7])
-	xtCode.WriteByte(key[3])
-	xtCode.WriteByte(key[15])
-	xtCode.WriteByte(key[24])
-	xtCode.WriteByte(key[9])
-	xtCode.WriteByte(key[17])
-	xtCode.WriteByte(key[29])
-	xtCode.WriteByte(key[23])
-	return xtCode.String()
 }
 
 type SportResult struct {
@@ -264,7 +232,7 @@ func (s *Session) GetSportResult() (r *SportResult, e error) {
 	}
 	r = new(SportResult)
 	if httpSporstResult.LastTime != "" {
-		r.LastTime, err = fromHTTPTimeStr(httpSporstResult.LastTime)
+		r.LastTime, err = fromExchangeTimeStr(httpSporstResult.LastTime)
 	} else {
 		r.LastTime = time.Now()
 	}

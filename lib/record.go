@@ -1,20 +1,25 @@
 package lib
 
 import (
+	"bytes"
+	"crypto/md5"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"inkedawn/sunShineSportsHelper/utility"
 )
 
 type Record struct {
+	UserID    int64
 	Distance  float64
 	BeginTime time.Time
 	EndTime   time.Time
+	XTcode    string
 }
 
-func SmartCreateRecords(limitParams *LimitParams, distance float64, beforeTime time.Time) []Record {
+func SmartCreateRecords(userID int64, limitParams *LimitParams, distance float64, beforeTime time.Time) []Record {
 	records := make([]Record, 0, int(distance/3))
 	remain := distance
 	lastBeginTime := beforeTime
@@ -71,9 +76,11 @@ func SmartCreateRecords(limitParams *LimitParams, distance float64, beforeTime t
 		beginTime := endTime.Add(-randomDuration)
 
 		records = append(records, Record{
+			UserID:    userID,
 			Distance:  singleDistance,
 			BeginTime: beginTime,
 			EndTime:   endTime,
+			XTcode:    GetXTcodeV2(userID, toExchangeTimeStr(beginTime), toExchangeDistanceStr(singleDistance)),
 		})
 
 		remain -= singleDistance - tinyPart
@@ -91,4 +98,34 @@ func CreateRecord(distance float64, beforeTime time.Time, duration time.Duration
 		BeginTime: beforeTime.Add(-duration),
 		EndTime:   beforeTime,
 	}
+}
+
+func GetXTcode(userId int64, beginTime string) string {
+	key := fmt.Sprintf("%x", md5.Sum([]byte(strconv.FormatInt(userId, 10)+beginTime+"stlchang")))
+	var xtCode bytes.Buffer
+	xtCode.WriteByte(key[7])
+	xtCode.WriteByte(key[3])
+	xtCode.WriteByte(key[15])
+	xtCode.WriteByte(key[24])
+	xtCode.WriteByte(key[9])
+	xtCode.WriteByte(key[17])
+	xtCode.WriteByte(key[29])
+	xtCode.WriteByte(key[23])
+	return xtCode.String()
+}
+
+func GetXTcodeV2(userId int64, beginTime string, distance string) string {
+	phrase := strconv.FormatInt(userId, 10) + beginTime + distance + "stlchang"
+	key := fmt.Sprintf("%x", md5.Sum([]byte(phrase)))
+	log.Println(phrase, key)
+	var xtCode bytes.Buffer
+	xtCode.WriteByte(key[7])
+	xtCode.WriteByte(key[3])
+	xtCode.WriteByte(key[15])
+	xtCode.WriteByte(key[24])
+	xtCode.WriteByte(key[9])
+	xtCode.WriteByte(key[17])
+	xtCode.WriteByte(key[29])
+	xtCode.WriteByte(key[23])
+	return xtCode.String()
 }

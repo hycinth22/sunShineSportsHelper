@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -38,7 +39,13 @@ const (
 	displayTimePattern = "2006-01-02 15:04"
 )
 
+var closeLog = true
+
 func init() {
+	if closeLog {
+		log.SetOutput(ioutil.Discard)
+	}
+
 	flag.BoolVar(&cmdFlags.help, "h", false, "this help")
 	flag.BoolVar(&cmdFlags.silent, "q", false, "quiet mode")
 
@@ -168,7 +175,7 @@ func uploadData(s *jkwx.Session) {
 				return
 			}
 		}
-		records = jkwx.SmartCreateRecords(s.LimitParams, totalDistance, time.Now())
+		records = jkwx.SmartCreateRecords(s.UserID, s.LimitParams, totalDistance, time.Now())
 	} else {
 		records = []jkwx.Record{
 			jkwx.CreateRecord(totalDistance, time.Now(), cmdFlags.duration),
@@ -185,6 +192,7 @@ func uploadData(s *jkwx.Session) {
 		fmt.Println("第", i+1, "条")
 		fmt.Println("起始时间：", record.BeginTime.Format(displayTimePattern))
 		fmt.Println("结束时间：", record.EndTime.Format(displayTimePattern))
+		fmt.Println("XTCode：", record.XTcode)
 		fmt.Printf("用时%s内完成%.3f公里距离，速度约为%.2fm/s \n", duration, distance, v)
 	}
 
