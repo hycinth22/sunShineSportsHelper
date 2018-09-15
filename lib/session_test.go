@@ -17,9 +17,7 @@ func init() {
 func TestLogin(t *testing.T) {
 	// 已在init()中执行函数功能函数，此处仅检测结果
 	if loginErr != nil {
-		if HTTPErr, ok := loginErr.(HTTPError); ok {
-			t.Log(HTTPErr)
-		}
+		t.Log(loginErr.Error())
 		t.Fatalf("%v", loginErr)
 	}
 	t.Logf("%+v", session)
@@ -51,3 +49,11 @@ func TestGetXtcode(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestGetXtcodeV2(t *testing.T) {
+	if r := GetXtcodeV2(4502, "2018-09-15 11:01:24.7", "2.520"); r != "61b1c85e" {
+		t.Log(r)
+		t.FailNow()
+	}
+}
+

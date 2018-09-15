@@ -134,8 +134,8 @@ func showStatus(s *jkwx.Session) {
 	fmt.Println("性别：\t", s.UserInfo.Sex)
 	fmt.Println("-----------")
 	fmt.Printf("LastTime：\t%s \n", r.LastTime.Format(displayTimePattern))
-	fmt.Printf("已跑距离：\t%05.2f 公里\n", r.Distance)
-	fmt.Printf("达标距离：\t%05.2f 公里\n", r.Qualified)
+	fmt.Printf("已跑距离：\t%05.3f 公里\n", r.Distance)
+	fmt.Printf("达标距离：\t%05.3f 公里\n", r.Qualified)
 	fmt.Println("-----------")
 	// fmt.Printf("%+v", r)
 }
@@ -185,7 +185,7 @@ func uploadData(s *jkwx.Session) {
 		fmt.Println("第", i+1, "条")
 		fmt.Println("起始时间：", record.BeginTime.Format(displayTimePattern))
 		fmt.Println("结束时间：", record.EndTime.Format(displayTimePattern))
-		fmt.Printf("用时%s内完成%.2f公里距离，速度约为%.2fm/s \n", duration, distance, v)
+		fmt.Printf("用时%s内完成%.3f公里距离，速度约为%.2fm/s \n", duration, distance, v)
 	}
 
 	if !cmdFlags.silent {
