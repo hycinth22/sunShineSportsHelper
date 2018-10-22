@@ -26,6 +26,8 @@ var cmdFlags struct {
 	status bool
 
 	upload          bool
+	endTime         string
+	uploadTest      bool
 	rawRecord       bool
 	ignoreCompleted bool
 	distance        float64
@@ -37,6 +39,7 @@ const (
 	defaultDistanceMale   = 4.5
 
 	displayTimePattern = "2006-01-02 15:04"
+	inputTimePattern   = displayTimePattern
 )
 
 var closeLog = true
@@ -57,6 +60,8 @@ func init() {
 	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
 
 	flag.BoolVar(&cmdFlags.upload, "upload", false, "upload sport data")
+	flag.BoolVar(&cmdFlags.uploadTest, "uploadTest", false, "upload test sport data")
+	flag.StringVar(&cmdFlags.endTime, "endTime", time.Now().Format(inputTimePattern), "upload test sport data")
 	flag.BoolVar(&cmdFlags.rawRecord, "rawRecord", false, "upload rawRecord sport data")
 	flag.BoolVar(&cmdFlags.ignoreCompleted, "ignoreCompleted", false, "continue to upload though completed")
 	flag.Float64Var(&cmdFlags.distance, "distance", 0.0, "distance(精确到小数点后6位).")
@@ -83,6 +88,8 @@ func main() {
 		switch {
 		case cmdFlags.upload:
 			uploadData(s)
+		case cmdFlags.uploadTest:
+			uploadTestData(s)
 		}
 	}
 }
@@ -146,7 +153,11 @@ func showStatus(s *jkwx.Session) {
 	fmt.Println("-----------")
 	// fmt.Printf("%+v", r)
 }
+
 func uploadData(s *jkwx.Session) {
+	rawRecord := cmdFlags.rawRecord
+	ignoreCompleted := cmdFlags.ignoreCompleted
+	silent := cmdFlags.silent
 	totalDistance := cmdFlags.distance
 	if cmdFlags.distance == 0.0 {
 		switch s.UserInfo.Sex {
@@ -158,10 +169,15 @@ func uploadData(s *jkwx.Session) {
 			log.Panicln("Unknown sex", s.UserInfo.Sex)
 		}
 	}
-	ignoreCompleted := cmdFlags.ignoreCompleted
+	endTime, err := time.Parse(inputTimePattern, cmdFlags.endTime)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	duration := cmdFlags.duration
 
 	var records []jkwx.Record
-	if !cmdFlags.rawRecord {
+	if !rawRecord {
 		if totalDistance < s.LimitParams.LimitTotalDistance.Min || totalDistance > s.LimitParams.LimitTotalDistance.Max {
 			fmt.Printf("超出限制的总距离（%f - %f）\n", s.LimitParams.LimitTotalDistance.Min, s.LimitParams.LimitTotalDistance.Max)
 			return
@@ -178,7 +194,7 @@ func uploadData(s *jkwx.Session) {
 		records = jkwx.SmartCreateRecords(s.UserID, s.LimitParams, totalDistance, time.Now())
 	} else {
 		records = []jkwx.Record{
-			jkwx.CreateRecord(totalDistance, time.Now(), cmdFlags.duration),
+			jkwx.CreateRecord(s.UserID, totalDistance, endTime, duration),
 		}
 	}
 
@@ -196,7 +212,7 @@ func uploadData(s *jkwx.Session) {
 		fmt.Printf("用时%s内完成%.3f公里距离，速度约为%.2fm/s \n", duration, distance, v)
 	}
 
-	if !cmdFlags.silent {
+	if !silent {
 		fmt.Println("请输入YES确认")
 		var confirm string
 		fmt.Scan(&confirm)
@@ -228,4 +244,22 @@ func uploadData(s *jkwx.Session) {
 		}
 	}
 	fmt.Println("---------------")
+}
+
+func uploadTestData(s *jkwx.Session) {
+	totalDistance := cmdFlags.distance
+	duration := cmdFlags.duration
+	endTime, err := time.Parse(inputTimePattern, cmdFlags.endTime)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	record := jkwx.CreateRecord(s.UserID, totalDistance, endTime, duration)
+	err = s.UploadTestRecord(record)
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		fmt.Println("上传成功")
+	}
+
 }
