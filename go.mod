@@ -1,1 +1,1 @@
-module inkedawn/sunShineSportsHelper
+module github.com/inkedawn/sunShineSportsHelper

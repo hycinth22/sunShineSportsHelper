@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"inkedawn/sunShineSportsHelper/utility"
+	"github.com/inkedawn/sunShineSportsHelper/utility"
 )
 
 func TestTime(t *testing.T) {

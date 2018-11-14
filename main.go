@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	jkwx "inkedawn/sunShineSportsHelper/lib"
-	"inkedawn/sunShineSportsHelper/utility"
+	jkwx "github.com/inkedawn/sunShineSportsHelper/lib"
+	"github.com/inkedawn/sunShineSportsHelper/utility"
 )
 
 var cmdFlags struct {
@@ -38,7 +38,7 @@ const (
 	defaultDistanceFemale = 2.5
 	defaultDistanceMale   = 4.5
 
-	displayTimePattern = "2006-01-02 15:04"
+	displayTimePattern = "2006-01-02 15:04:05"
 	inputTimePattern   = displayTimePattern
 )
 
@@ -157,7 +157,6 @@ func showStatus(s *jkwx.Session) {
 func uploadData(s *jkwx.Session) {
 	rawRecord := cmdFlags.rawRecord
 	ignoreCompleted := cmdFlags.ignoreCompleted
-	silent := cmdFlags.silent
 	totalDistance := cmdFlags.distance
 	if cmdFlags.distance == 0.0 {
 		switch s.UserInfo.Sex {
@@ -198,35 +197,13 @@ func uploadData(s *jkwx.Session) {
 		}
 	}
 
-	fmt.Println("--------------")
-	fmt.Println("| 确认上传数据 |")
-	fmt.Println("---------------")
-	for i, record := range records {
-		distance := record.Distance
-		duration := record.EndTime.Sub(record.BeginTime)
-		v := record.Distance * 1000 / duration.Seconds()
-		fmt.Println("第", i+1, "条")
-		fmt.Println("起始时间：", record.BeginTime.Format(displayTimePattern))
-		fmt.Println("结束时间：", record.EndTime.Format(displayTimePattern))
-		fmt.Println("XTCode：", record.XTcode)
-		fmt.Printf("用时%s内完成%.3f公里距离，速度约为%.2fm/s \n", duration, distance, v)
+	if !confirm(records) {
+		return
 	}
-
-	if !silent {
-		fmt.Println("请输入YES确认")
-		var confirm string
-		fmt.Scan(&confirm)
-		fmt.Println("---------------")
-		if confirm != "YES" {
-			return
-		}
-	}
-
 	allErr := make([]error, len(records))
 	for i, record := range records {
 		allErr[i] = s.UploadRecord(record)
 	}
-
 	fmt.Println("---------------")
 	fmt.Println("上传结果：")
 	for _, err := range allErr {
@@ -255,6 +232,9 @@ func uploadTestData(s *jkwx.Session) {
 		os.Exit(-1)
 	}
 	record := jkwx.CreateRecord(s.UserID, totalDistance, endTime, duration)
+	if !confirm([]jkwx.Record{record}) {
+		return
+	}
 	err = s.UploadTestRecord(record)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -262,4 +242,31 @@ func uploadTestData(s *jkwx.Session) {
 		fmt.Println("上传成功")
 	}
 
+}
+
+func confirm(records []jkwx.Record) bool {
+	silent := cmdFlags.silent
+	if silent {
+		return true
+	}
+
+	fmt.Println("--------------")
+	fmt.Println("| 确认上传数据 |")
+	fmt.Println("---------------")
+	for i, record := range records {
+		distance := record.Distance
+		duration := record.EndTime.Sub(record.BeginTime)
+		v := record.Distance * 1000 / duration.Seconds()
+		fmt.Println("第", i+1, "条")
+		fmt.Println("起始时间：", record.BeginTime.Format(displayTimePattern))
+		fmt.Println("结束时间：", record.EndTime.Format(displayTimePattern))
+		fmt.Println("XTCode：", record.XTcode)
+		fmt.Printf("用时%s内完成%.3f公里距离，速度约为%.2fm/s \n", duration, distance, v)
+	}
+
+	fmt.Println("请输入YES确认")
+	var confirm string
+	fmt.Scan(&confirm)
+	fmt.Println("---------------")
+	return confirm == "YES"
 }
