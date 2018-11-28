@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	jkwx "github.com/inkedawn/sunShineSportsHelper/lib"
+	jkwx "github.com/inkedawn/go-sunshinemotion"
 	"github.com/inkedawn/sunShineSportsHelper/utility"
 )
 

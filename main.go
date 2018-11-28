@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	jkwx "github.com/inkedawn/sunShineSportsHelper/lib"
+	jkwx "github.com/inkedawn/go-sunshinemotion"
 	"github.com/inkedawn/sunShineSportsHelper/utility"
 )
 
@@ -260,7 +260,6 @@ func confirm(records []jkwx.Record) bool {
 		fmt.Println("第", i+1, "条")
 		fmt.Println("起始时间：", record.BeginTime.Format(displayTimePattern))
 		fmt.Println("结束时间：", record.EndTime.Format(displayTimePattern))
-		fmt.Println("XTCode：", record.XTcode)
 		fmt.Printf("用时%s内完成%.3f公里距离，速度约为%.2fm/s \n", duration, distance, v)
 	}
 
