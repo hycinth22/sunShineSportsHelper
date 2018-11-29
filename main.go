@@ -40,6 +40,7 @@ const (
 
 	displayTimePattern = "2006-01-02 15:04:05"
 	inputTimePattern   = displayTimePattern
+	defaultSchoolID    = 60
 )
 
 var closeLog = true
@@ -190,7 +191,7 @@ func uploadData(s *jkwx.Session) {
 				return
 			}
 		}
-		records = jkwx.SmartCreateRecords(s.UserID, s.LimitParams, totalDistance, time.Now())
+		records = jkwx.SmartCreateRecords(s.UserID, s.LimitParams, totalDistance, endTime)
 	} else {
 		records = []jkwx.Record{
 			jkwx.CreateRecord(s.UserID, totalDistance, endTime, duration),
