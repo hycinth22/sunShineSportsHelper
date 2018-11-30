@@ -22,6 +22,7 @@ var cmdFlags struct {
 	forceLogin bool
 	user       string
 	password   string
+	schoolID   int64
 
 	status bool
 
@@ -57,6 +58,7 @@ func init() {
 	flag.BoolVar(&cmdFlags.forceLogin, "forceLogin", false, "login into account(not use existent session)")
 	flag.StringVar(&cmdFlags.user, "u", "default", "account(stuNum)")
 	flag.StringVar(&cmdFlags.password, "p", "", "password")
+	flag.Int64Var(&cmdFlags.schoolID, "s", defaultSchoolID, "school ID")
 
 	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
 
@@ -123,7 +125,7 @@ func loginAccount() {
 		return
 	} else {
 		s = jkwx.CreateSession()
-		err := s.Login(cmdFlags.user, "123", fmt.Sprintf("%x", md5.Sum([]byte(cmdFlags.password))))
+		err := s.LoginEx(cmdFlags.user, "123", fmt.Sprintf("%x", md5.Sum([]byte(cmdFlags.password))), cmdFlags.schoolID)
 		if err != nil {
 			fmt.Println(err.Error())
 			return

@@ -7,7 +7,7 @@ pushd $wd
 source ./common.sh
 
 sleep $1
-execJKWX $2 $3 $4
+execJKWX $2 $3 $4 $5
 
 # recover previous workDir
 popd

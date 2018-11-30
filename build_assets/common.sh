@@ -19,14 +19,15 @@ chmod 664 $logFile
 # function signature: exec(user, pwd, dis)
 function execJKWX()
 {
-    user=$1
-    pwd=$2
-    dis=$3
+    school=$1
+    user=$2
+    pwd=$3
+    dis=$4
 	log=`printf ${userLogPathPattern} ${user}`
 	echo user\'s logFile $log
     echo $user + `date` | tee -a ${log}
 
-    $main -u $user -login -p $pwd | tee -a ${log}
+    $main -u $user -login -p $pwd -s $school | tee -a ${log}
     randomSleep 15 30
     # $main -status -u $user | tee -a ${log}
     $main -u $user -upload -q -distance $dis | tee -a ${log}
