@@ -1,3 +1,3 @@
 module github.com/inkedawn/sunShineSportsHelper
 
-require github.com/inkedawn/go-sunshinemotion v1.2.0
+require github.com/inkedawn/go-sunshinemotion v1.2.1

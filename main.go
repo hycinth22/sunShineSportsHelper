@@ -180,11 +180,6 @@ func uploadData(s *jkwx.Session) {
 
 	var records []jkwx.Record
 	if !rawRecord {
-		if totalDistance < s.LimitParams.LimitTotalDistance.Min || totalDistance > s.LimitParams.LimitTotalDistance.Max {
-			fmt.Printf("超出限制的总距离（%f - %f）\n", s.LimitParams.LimitTotalDistance.Min, s.LimitParams.LimitTotalDistance.Max)
-			return
-		}
-
 		if !ignoreCompleted {
 			r, err := s.GetSportResult()
 			if err == nil && r.Distance >= r.Qualified {
