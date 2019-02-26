@@ -18,8 +18,5 @@ build/
 # program data
 sunShine_Sports*.session
 
-# go module checksum
-go.sum
-
 # IDEA profile
 .idea
