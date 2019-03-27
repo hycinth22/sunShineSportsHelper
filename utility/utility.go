@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+//noinspection SpellCheckingInspection
 var UA = []string{
 	"Dalvik/2.1.0 (Linux; U; Android 7.0; GT-I9152P Build/JLS36C)",
 	"UCWEB7.0.2.37/28/999",

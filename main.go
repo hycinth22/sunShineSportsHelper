@@ -18,6 +18,7 @@ var cmdFlags struct {
 
 	silent bool
 
+	getRoute   bool
 	login      bool
 	forceLogin bool
 	user       string
@@ -47,13 +48,15 @@ const (
 var closeLog = true
 
 func init() {
-	if closeLog {
+	if //noinspection GoBoolExpressions
+	closeLog {
 		log.SetOutput(ioutil.Discard)
 	}
 
 	flag.BoolVar(&cmdFlags.help, "h", false, "this help")
 	flag.BoolVar(&cmdFlags.silent, "q", false, "quiet mode")
 
+	flag.BoolVar(&cmdFlags.getRoute, "getRoute", false, "")
 	flag.BoolVar(&cmdFlags.login, "login", false, "login into account")
 	flag.BoolVar(&cmdFlags.forceLogin, "forceLogin", false, "login into account(not use existent session)")
 	flag.StringVar(&cmdFlags.user, "u", "default", "account(stuNum)")
@@ -90,6 +93,8 @@ func main() {
 		checkAppVer(s)
 		showStatus(s, info)
 		switch {
+		case cmdFlags.getRoute:
+			getRoute(s)
 		case cmdFlags.upload:
 			uploadData(s, info)
 		case cmdFlags.uploadTest:
@@ -101,7 +106,7 @@ func main() {
 func tryResume() (*jkwx.Session, jkwx.UserInfo) {
 	defer func() {
 		if err, ok := recover().(error); ok {
-			fmt.Println("Reusme failed.", err.Error())
+			fmt.Println("Resume failed.", err.Error())
 			fmt.Println("** You can try to delete the session file ", getSessionFilePathById(cmdFlags.schoolID, cmdFlags.user))
 		}
 	}()
@@ -303,4 +308,13 @@ func confirm(records []jkwx.Record) bool {
 	fmt.Scan(&confirm)
 	fmt.Println("---------------")
 	return confirm == "YES"
+}
+
+func getRoute(s *jkwx.Session) {
+	r, err := s.GetRandRoute()
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		fmt.Println(r)
+	}
 }
