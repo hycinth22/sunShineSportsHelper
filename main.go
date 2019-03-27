@@ -271,7 +271,11 @@ func confirm(records []jkwx.Record) bool {
 
 	fmt.Println("请输入YES确认")
 	var confirm string
-	fmt.Scan(&confirm)
+	_, err := fmt.Scan(&confirm)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
 	fmt.Println("---------------")
 	return confirm == "YES"
 }
