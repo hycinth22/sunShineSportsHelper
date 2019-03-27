@@ -311,6 +311,9 @@ func setDevice(s *jkwx.Session, info jkwx.UserInfo) {
 	if cmdFlags.modelType != "" {
 		s.Device.ModelType = cmdFlags.modelType
 	}
+	if cmdFlags.screen != "" {
+		s.Device.Screen = cmdFlags.screen
+	}
 	if cmdFlags.imei != "" {
 		s.Device.IMEI = cmdFlags.imei
 	}

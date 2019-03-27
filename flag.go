@@ -25,6 +25,7 @@ var cmdFlags struct {
 
 	deviceName string
 	modelType  string
+	screen     string
 	imei       string
 	imsi       string
 	userAgent  string
@@ -54,6 +55,7 @@ func parseFlag() {
 
 	flags.StringVar(&cmdFlags.deviceName, "device", "", "")
 	flags.StringVar(&cmdFlags.modelType, "model", "", "")
+	flags.StringVar(&cmdFlags.screen, "screen", "", "")
 	flags.StringVar(&cmdFlags.imei, "imei", "", "")
 	flags.StringVar(&cmdFlags.imsi, "imsi", "", "")
 	flags.StringVar(&cmdFlags.userAgent, "userAgent", "", "")
