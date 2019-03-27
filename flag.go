@@ -30,19 +30,20 @@ func parseFlag() {
 		os.Exit(0)
 	}
 	cmd = os.Args[1]
+	flags := flag.NewFlagSet(cmd, flag.ExitOnError)
 	fmt.Println("Command:", cmd)
-	flag.BoolVar(&cmdFlags.silent, "q", false, "quiet mode")
+	flags.BoolVar(&cmdFlags.silent, "q", false, "quiet mode")
 
-	flag.Int64Var(&cmdFlags.schoolID, "s", defaultSchoolID, "school ID")
-	flag.StringVar(&cmdFlags.user, "u", "default", "account(stuNum)")
-	flag.StringVar(&cmdFlags.password, "p", "", "password")
+	flags.Int64Var(&cmdFlags.schoolID, "s", defaultSchoolID, "school ID")
+	flags.StringVar(&cmdFlags.user, "u", "default", "account(stuNum)")
+	flags.StringVar(&cmdFlags.password, "p", "", "password")
 
-	flag.StringVar(&cmdFlags.endTime, "endTime", time.Now().Format(inputTimePattern), "upload test sport data")
-	flag.BoolVar(&cmdFlags.rawRecord, "rawRecord", false, "upload rawRecord sport data")
-	flag.BoolVar(&cmdFlags.ignoreCompleted, "ignoreCompleted", false, "continue to upload though completed")
-	flag.Float64Var(&cmdFlags.distance, "distance", 0.0, "distance(精确到小数点后6位).")
+	flags.StringVar(&cmdFlags.endTime, "endTime", time.Now().Format(inputTimePattern), "upload test sport data")
+	flags.BoolVar(&cmdFlags.rawRecord, "rawRecord", false, "upload rawRecord sport data")
+	flags.BoolVar(&cmdFlags.ignoreCompleted, "ignoreCompleted", false, "continue to upload though completed")
+	flags.Float64Var(&cmdFlags.distance, "distance", 0.0, "distance(精确到小数点后6位).")
 
 	randomDuration := time.Duration(utility.RandRange(12, 20)) * time.Minute
-	flag.DurationVar(&cmdFlags.duration, "duration", randomDuration, "time duration")
-	flag.Parse()
+	flags.DurationVar(&cmdFlags.duration, "duration", randomDuration, "time duration")
+	flags.Parse(os.Args[2:])
 }
