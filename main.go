@@ -98,6 +98,10 @@ func main() {
 		return
 	case "uploadTest":
 		uploadTestData(s)
+		return
+	case "testRule":
+		getTestRule(s)
+		return
 	}
 }
 
