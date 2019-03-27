@@ -22,6 +22,12 @@ var cmdFlags struct {
 	ignoreCompleted bool
 	distance        float64
 	duration        time.Duration
+
+	deviceName string
+	modelType  string
+	imei       string
+	imsi       string
+	userAgent  string
 }
 
 func parseFlag() {
@@ -45,5 +51,11 @@ func parseFlag() {
 
 	randomDuration := time.Duration(utility.RandRange(12, 20)) * time.Minute
 	flags.DurationVar(&cmdFlags.duration, "duration", randomDuration, "time duration")
+
+	flags.StringVar(&cmdFlags.deviceName, "device", "", "")
+	flags.StringVar(&cmdFlags.modelType, "model", "", "")
+	flags.StringVar(&cmdFlags.imei, "imei", "", "")
+	flags.StringVar(&cmdFlags.imsi, "imsi", "", "")
+	flags.StringVar(&cmdFlags.userAgent, "userAgent", "", "")
 	flags.Parse(os.Args[2:])
 }

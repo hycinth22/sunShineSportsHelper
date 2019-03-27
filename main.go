@@ -66,6 +66,12 @@ func main() {
 	case "testRule":
 		getTestRule(s)
 		return
+	case "setDevice":
+		setDevice(s, info)
+		return
+	case "showDevice":
+		showDevice(s)
+		return
 	}
 }
 
@@ -296,4 +302,27 @@ func getTestRule(s *jkwx.Session) {
 	} else {
 		fmt.Println(rule)
 	}
+}
+
+func setDevice(s *jkwx.Session, info jkwx.UserInfo) {
+	if cmdFlags.deviceName != "" {
+		s.Device.DeviceName = cmdFlags.deviceName
+	}
+	if cmdFlags.modelType != "" {
+		s.Device.ModelType = cmdFlags.modelType
+	}
+	if cmdFlags.imei != "" {
+		s.Device.IMEI = cmdFlags.imei
+	}
+	if cmdFlags.imsi != "" {
+		s.Device.IMSI = cmdFlags.imsi
+	}
+	if cmdFlags.userAgent != "" {
+		s.Device.UserAgent = cmdFlags.userAgent
+	}
+	saveSession(s, info)
+}
+
+func showDevice(s *jkwx.Session) {
+	fmt.Printf("Device: %+v", *s.Device)
 }
