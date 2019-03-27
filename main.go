@@ -13,23 +13,15 @@ import (
 	"github.com/inkedawn/sunShineSportsHelper/utility"
 )
 
+var cmd string
 var cmdFlags struct {
-	help bool
-
 	silent bool
 
-	getRoute   bool
-	login      bool
-	forceLogin bool
-	user       string
-	password   string
-	schoolID   int64
+	schoolID int64
+	user     string
+	password string
 
-	status bool
-
-	upload          bool
 	endTime         string
-	uploadTest      bool
 	rawRecord       bool
 	ignoreCompleted bool
 	distance        float64
@@ -53,20 +45,18 @@ func init() {
 		log.SetOutput(ioutil.Discard)
 	}
 
-	flag.BoolVar(&cmdFlags.help, "h", false, "this help")
+	if len(os.Args) < 2 {
+		fmt.Println("Arguments needed.")
+		os.Exit(0)
+	}
+	cmd = os.Args[1]
+	fmt.Println("Command:", cmd)
 	flag.BoolVar(&cmdFlags.silent, "q", false, "quiet mode")
 
-	flag.BoolVar(&cmdFlags.getRoute, "getRoute", false, "")
-	flag.BoolVar(&cmdFlags.login, "login", false, "login into account")
-	flag.BoolVar(&cmdFlags.forceLogin, "forceLogin", false, "login into account(not use existent session)")
+	flag.Int64Var(&cmdFlags.schoolID, "s", defaultSchoolID, "school ID")
 	flag.StringVar(&cmdFlags.user, "u", "default", "account(stuNum)")
 	flag.StringVar(&cmdFlags.password, "p", "", "password")
-	flag.Int64Var(&cmdFlags.schoolID, "s", defaultSchoolID, "school ID")
 
-	flag.BoolVar(&cmdFlags.status, "status", false, "view account status")
-
-	flag.BoolVar(&cmdFlags.upload, "upload", false, "upload sport data")
-	flag.BoolVar(&cmdFlags.uploadTest, "uploadTest", false, "upload test sport data")
 	flag.StringVar(&cmdFlags.endTime, "endTime", time.Now().Format(inputTimePattern), "upload test sport data")
 	flag.BoolVar(&cmdFlags.rawRecord, "rawRecord", false, "upload rawRecord sport data")
 	flag.BoolVar(&cmdFlags.ignoreCompleted, "ignoreCompleted", false, "continue to upload though completed")
@@ -75,31 +65,39 @@ func init() {
 	randomDuration := time.Duration(utility.RandRange(12, 20)) * time.Minute
 	flag.DurationVar(&cmdFlags.duration, "duration", randomDuration, "time duration")
 	flag.Parse()
+
 }
 
 func main() {
-	switch {
-	case cmdFlags.help:
+	switch cmd {
+	case "help":
 		printHelp()
-	case cmdFlags.login:
+		return
+	case "login":
 		loginAccount()
-	default:
-		// need session
-		s, info := tryResume()
-		if s == nil {
-			fmt.Println("Need to login.")
-			return
-		}
-		checkAppVer(s)
-		showStatus(s, info)
-		switch {
-		case cmdFlags.getRoute:
-			getRoute(s)
-		case cmdFlags.upload:
-			uploadData(s, info)
-		case cmdFlags.uploadTest:
-			uploadTestData(s)
-		}
+		return
+	}
+
+	// need session
+	s, info := tryResume()
+	if s == nil {
+		fmt.Println("Need to login.")
+		return
+	}
+	checkAppVer(s)
+	showStatus(s, info)
+
+	switch cmd {
+	case "status":
+		return
+	case "getRoute":
+		getRoute(s)
+		return
+	case "upload":
+		uploadData(s, info)
+		return
+	case "uploadTest":
+		uploadTestData(s)
 	}
 }
 
@@ -165,7 +163,7 @@ func loginAccount() {
 		info, err = s.Login(cmdFlags.schoolID, cmdFlags.user, "123", fmt.Sprintf("%x", md5.Sum([]byte(cmdFlags.password))))
 		if err != nil {
 			fmt.Println(err.Error())
-
+			return
 		}
 		s.Device.UserAgent = utility.GetRandUserAgent()
 	}
@@ -316,5 +314,14 @@ func getRoute(s *jkwx.Session) {
 		fmt.Println(err.Error())
 	} else {
 		fmt.Println(r)
+	}
+}
+
+func getTestRule(s *jkwx.Session) {
+	rule, err := s.GetTestRule()
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		fmt.Println(rule)
 	}
 }
