@@ -82,60 +82,94 @@ func main() {
 		loginAccount()
 	default:
 		// need session
-		s := tryResume()
+		s, info := tryResume()
 		if s == nil {
 			fmt.Println("Need to login.")
 			return
 		}
-		showStatus(s)
+		checkAppVer(s)
+		showStatus(s, info)
 		switch {
 		case cmdFlags.upload:
-			uploadData(s)
+			uploadData(s, info)
 		case cmdFlags.uploadTest:
 			uploadTestData(s)
 		}
 	}
 }
 
-func tryResume() *jkwx.Session {
+func tryResume() (*jkwx.Session, jkwx.UserInfo) {
 	defer func() {
 		if err, ok := recover().(error); ok {
 			fmt.Println("Reusme failed.", err.Error())
-			fmt.Println("** You can try to delete the session file ", getSessionFilePathById(cmdFlags.user))
+			fmt.Println("** You can try to delete the session file ", getSessionFilePathById(cmdFlags.schoolID, cmdFlags.user))
 		}
 	}()
-	s, _ := readSession(cmdFlags.user)
+	s, info, err := readSession(cmdFlags.schoolID, cmdFlags.user)
+	if err == ErrSessionNotExist {
+		return nil, jkwx.UserInfo{}
+	}
+	if err != nil {
+		panic(err)
+	}
 	if s != nil {
 		fmt.Println("Use Existent Session.")
-		fmt.Println("UserAgent", s.UserAgent)
-		fmt.Println("expiredTime", s.UserExpirationTime.Format(displayTimePattern))
+		fmt.Println("UserAgent", s.Device.UserAgent)
+		fmt.Println("ExpiredTime", s.Token.ExpirationTime.Format(displayTimePattern))
 		fmt.Println()
 	}
-	return s
+	return s, info
 }
 
 func printHelp() {
 	flag.Usage()
 	os.Exit(0)
 }
-func loginAccount() {
-	s, _ := readSession(cmdFlags.user)
-	if s != nil {
-		fmt.Println("Alread Login.")
+
+func checkAppVer(s *jkwx.Session) {
+	appInfo, err := s.GetAppInfo()
+	if err != nil {
+		fmt.Println("Warning: 获取APP版本失败")
 		return
-	} else {
-		s = jkwx.CreateSession()
-		err := s.LoginEx(cmdFlags.user, "123", fmt.Sprintf("%x", md5.Sum([]byte(cmdFlags.password))), cmdFlags.schoolID)
+	}
+	fmt.Println("Latest Ver: ", appInfo.VerNumber)
+	fmt.Println("Lib Ver: ", jkwx.AppVersionID)
+	if appInfo.VerNumber > jkwx.AppVersionID {
+		fmt.Println("需要更新")
+		os.Exit(1)
+	}
+	return
+}
+
+func loginAccount() {
+	s, info, err := readSession(cmdFlags.schoolID, cmdFlags.user)
+	if err != nil && err != ErrSessionNotExist {
+		panic(err)
+	}
+	if s != nil {
+		// old user
+		fmt.Println("Already Login. Use Old Session(Keep Same Device).")
+		info, err = s.Login(cmdFlags.schoolID, cmdFlags.user, "123", fmt.Sprintf("%x", md5.Sum([]byte(cmdFlags.password))))
 		if err != nil {
 			fmt.Println(err.Error())
 			return
 		}
-		s.UserAgent = utility.GetRandUserAgent()
+	} else {
+		// new user
+		s = jkwx.CreateSession()
+		info, err = s.Login(cmdFlags.schoolID, cmdFlags.user, "123", fmt.Sprintf("%x", md5.Sum([]byte(cmdFlags.password))))
+		if err != nil {
+			fmt.Println(err.Error())
+
+		}
+		s.Device.UserAgent = utility.GetRandUserAgent()
 	}
-	saveSession(s)
-	showStatus(s)
+	fmt.Printf("Device: %+v\n", *s.Device)
+	fmt.Printf("Token: %+v\n", *s.Token)
+	saveSession(s, info)
+	showStatus(s, info)
 }
-func showStatus(s *jkwx.Session) {
+func showStatus(s *jkwx.Session, info jkwx.UserInfo) {
 	r, err := s.GetSportResult()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -144,31 +178,34 @@ func showStatus(s *jkwx.Session) {
 	fmt.Println("-----------")
 	fmt.Println("| 帐号信息 |")
 	fmt.Println("-----------")
-	fmt.Println("ID：\t", s.UserID)
-	fmt.Println("班级：\t", s.UserInfo.InClassName)
-	fmt.Println("学号：\t", s.UserInfo.StudentNumber)
-	fmt.Println("姓名：\t", s.UserInfo.StudentName)
-	fmt.Println("性别：\t", s.UserInfo.Sex)
+	fmt.Println("ID：\t", s.User.UserID)
+	fmt.Println("SchoolID：\t", s.User.SchoolID)
+	fmt.Println("StuNum：\t", s.User.StuNum)
+	fmt.Println("-----------")
+	fmt.Println("班级：\t", info.ClassName)
+	fmt.Println("学号：\t", info.StudentNumber)
+	fmt.Println("姓名：\t", info.StudentName)
+	fmt.Println("性别：\t", info.Sex)
 	fmt.Println("-----------")
 	fmt.Printf("LastTime：\t%s \n", r.LastTime.Format(displayTimePattern))
-	fmt.Printf("已跑距离：\t%05.3f 公里\n", r.Distance)
-	fmt.Printf("达标距离：\t%05.3f 公里\n", r.Qualified)
+	fmt.Printf("已跑距离：\t%05.3f 公里\n", r.ActualDistance)
+	fmt.Printf("达标距离：\t%05.3f 公里\n", r.QualifiedDistance)
 	fmt.Println("-----------")
 	// fmt.Printf("%+v", r)
 }
 
-func uploadData(s *jkwx.Session) {
+func uploadData(s *jkwx.Session, info jkwx.UserInfo) {
 	rawRecord := cmdFlags.rawRecord
 	ignoreCompleted := cmdFlags.ignoreCompleted
 	totalDistance := cmdFlags.distance
 	if cmdFlags.distance == 0.0 {
-		switch s.UserInfo.Sex {
+		switch info.Sex {
 		case "F":
 			totalDistance = defaultDistanceFemale
 		case "M":
 			totalDistance = defaultDistanceMale
 		default:
-			log.Panicln("Unknown sex", s.UserInfo.Sex)
+			log.Panicln("Unknown sex", info.Sex)
 		}
 	}
 	endTime, err := time.Parse(inputTimePattern, cmdFlags.endTime)
@@ -182,16 +219,16 @@ func uploadData(s *jkwx.Session) {
 	if !rawRecord {
 		if !ignoreCompleted {
 			r, err := s.GetSportResult()
-			if err == nil && r.Distance >= r.Qualified {
+			if err == nil && r.ActualDistance >= r.QualifiedDistance {
 				fmt.Println("已达标，停止操作")
 
 				return
 			}
 		}
-		records = jkwx.SmartCreateRecords(s.UserID, s.LimitParams, totalDistance, endTime)
+		records = jkwx.SmartCreateRecordsBefore(s.User.SchoolID, s.User.UserID, jkwx.GetDefaultLimitParams(info.Sex), totalDistance, endTime)
 	} else {
 		records = []jkwx.Record{
-			jkwx.CreateRecord(s.UserID, totalDistance, endTime, duration),
+			jkwx.CreateRecord(s.User.UserID, s.User.SchoolID, totalDistance, endTime, duration),
 		}
 	}
 
@@ -211,10 +248,10 @@ func uploadData(s *jkwx.Session) {
 			fmt.Println(err.Error())
 		}
 	}
-	showStatus(s)
+	showStatus(s, info)
 	if !ignoreCompleted {
 		r, err := s.GetSportResult()
-		if err == nil && r.Distance >= r.Qualified {
+		if err == nil && r.ActualDistance >= r.QualifiedDistance {
 			fmt.Println("已达标")
 		}
 	}
@@ -229,7 +266,7 @@ func uploadTestData(s *jkwx.Session) {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	record := jkwx.CreateRecord(s.UserID, totalDistance, endTime, duration)
+	record := jkwx.CreateRecord(s.User.UserID, cmdFlags.schoolID, totalDistance, endTime, duration)
 	if !confirm([]jkwx.Record{record}) {
 		return
 	}

@@ -1,2 +1,10 @@
 github.com/inkedawn/go-sunshinemotion v1.4.1 h1:ks9LOuVJ+PRFGKgGSCIOM3ecQgy1OZbNvrFm01Qa+64=
 github.com/inkedawn/go-sunshinemotion v1.4.1/go.mod h1:ME1W06eG2qkpsYrEvNPZRZyFpUW9RwipWau9UnbkL+A=
+github.com/inkedawn/go-sunshinemotion v1.6.1 h1:JbwtDDem9eTLVl7EI+8bDQXRXGWi86smQ2JcBsK15Gk=
+github.com/inkedawn/go-sunshinemotion v1.6.1/go.mod h1:GptxzCzNeC0+7WBjxTzRE8QBgHx0z8b2MYo2Mnx0ASY=
+github.com/inkedawn/go-sunshinemotion v1.7.1 h1:+bPbAsXMZY7GqRGz4rRwMfEm+v5dgLDp+F858qwWQXE=
+github.com/inkedawn/go-sunshinemotion v1.7.1/go.mod h1:GptxzCzNeC0+7WBjxTzRE8QBgHx0z8b2MYo2Mnx0ASY=
+github.com/inkedawn/go-sunshinemotion v3.4.0+incompatible h1:WH/7i9eIIdcI/4uj1xkZMkBinTxAo8D0K5J+GooXaaI=
+github.com/inkedawn/go-sunshinemotion v3.4.0+incompatible/go.mod h1:GptxzCzNeC0+7WBjxTzRE8QBgHx0z8b2MYo2Mnx0ASY=
+github.com/inkedawn/go-sunshinemotion v3.5.0+incompatible h1:1BAdcLjGHFAROyi5pO5QVsyvvZdEfTvVhwRv4NhzS6Q=
+github.com/inkedawn/go-sunshinemotion v3.5.0+incompatible/go.mod h1:GptxzCzNeC0+7WBjxTzRE8QBgHx0z8b2MYo2Mnx0ASY=
