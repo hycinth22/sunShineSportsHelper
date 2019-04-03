@@ -163,6 +163,7 @@ func showStatus(s *jkwx.Session, info jkwx.UserInfo) {
 	fmt.Println("学号：\t", info.StudentNumber)
 	fmt.Println("姓名：\t", info.StudentName)
 	fmt.Println("性别：\t", info.Sex)
+	fmt.Println("UserRoleID：\t", info.UserRoleID)
 	fmt.Println("-----------")
 	fmt.Printf("LastTime：\t%s \n", r.LastTime.Format(displayTimePattern))
 	fmt.Printf("已跑距离：\t%05.3f 公里\n", r.ActualDistance)
