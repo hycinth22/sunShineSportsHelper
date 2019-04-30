@@ -1,4 +1,4 @@
-package main
+package sessionStroage
 
 import (
 	"encoding/gob"
@@ -22,20 +22,22 @@ type persistStruct struct {
 }
 
 func getSessionFilePath(s *jkwx.Session) string {
-	return getSessionFilePathById(s.User.SchoolID, s.User.StuNum)
+	return GetSessionFilePathById(s.User.SchoolID, s.User.StuNum)
 }
 
-func getSessionFilePathById(schoolID int64, stuNum string) string {
+func GetSessionFilePathById(schoolID int64, stuNum string) string {
 	return fmt.Sprintf(sessionFileFormat, schoolID, stuNum)
 }
 
-func saveSession(s *jkwx.Session, info jkwx.UserInfo) {
+func SaveSession(s *jkwx.Session, info jkwx.UserInfo) {
 	if s == nil {
 		panic("try to save nil session")
 	}
 	f, err := os.Create(getSessionFilePath(s))
 	if f != nil {
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 	}
 	if err != nil {
 		panic(err)
@@ -49,10 +51,12 @@ func saveSession(s *jkwx.Session, info jkwx.UserInfo) {
 	}
 }
 
-func readSession(schoolID int64, stuNum string) (*jkwx.Session, jkwx.UserInfo, error) {
-	f, err := os.Open(getSessionFilePathById(schoolID, stuNum))
+func ReadSession(schoolID int64, stuNum string) (*jkwx.Session, jkwx.UserInfo, error) {
+	f, err := os.Open(GetSessionFilePathById(schoolID, stuNum))
 	if f != nil {
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 	}
 	if os.IsNotExist(err) {
 		return nil, jkwx.UserInfo{}, ErrSessionNotExist
@@ -68,7 +72,7 @@ func readSession(schoolID int64, stuNum string) (*jkwx.Session, jkwx.UserInfo, e
 	session := s.Session
 	info := s.Info
 	if time.Now().After(session.Token.ExpirationTime) {
-		removeSession(schoolID, stuNum)
+		_ = removeSession(schoolID, stuNum)
 		fmt.Println("Login Expired.")
 		return nil, jkwx.UserInfo{}, ErrSessionNotExist
 	}
@@ -76,7 +80,7 @@ func readSession(schoolID int64, stuNum string) (*jkwx.Session, jkwx.UserInfo, e
 }
 
 func removeSession(schoolID int64, stuNum string) error {
-	err := os.Remove(getSessionFilePathById(schoolID, stuNum))
+	err := os.Remove(GetSessionFilePathById(schoolID, stuNum))
 	if os.IsNotExist(err) {
 		return ErrSessionNotExist
 	}
