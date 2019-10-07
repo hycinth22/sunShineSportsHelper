@@ -7,7 +7,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/inkedawn/go-sunshinemotion"
+	ssmt "github.com/inkedawn/go-sunshinemotion/v3"
+
 	_const "github.com/inkedawn/sunShineSportsHelper/const"
 	"github.com/inkedawn/sunShineSportsHelper/sessionStroage"
 	"github.com/inkedawn/sunShineSportsHelper/subcommand"

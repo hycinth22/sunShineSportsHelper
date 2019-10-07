@@ -3,7 +3,9 @@ package subcommand
 import (
 	"crypto/md5"
 	"fmt"
-	"github.com/inkedawn/go-sunshinemotion"
+
+	"github.com/inkedawn/go-sunshinemotion/v3"
+
 	"github.com/inkedawn/sunShineSportsHelper/sessionStroage"
 	"github.com/inkedawn/sunShineSportsHelper/utility"
 )

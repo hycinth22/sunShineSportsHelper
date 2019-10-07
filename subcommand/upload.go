@@ -2,12 +2,13 @@ package subcommand
 
 import (
 	"fmt"
-	"github.com/inkedawn/go-sunshinemotion"
-	_const "github.com/inkedawn/sunShineSportsHelper/const"
-
 	"log"
 	"os"
 	"time"
+
+	"github.com/inkedawn/go-sunshinemotion/v3"
+
+	_const "github.com/inkedawn/sunShineSportsHelper/const"
 )
 
 const (

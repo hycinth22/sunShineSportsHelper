@@ -2,7 +2,8 @@ package subcommand
 
 import (
 	"fmt"
-	jkwx "github.com/inkedawn/go-sunshinemotion"
+
+	jkwx "github.com/inkedawn/go-sunshinemotion/v3"
 )
 
 func GetRoute(s *jkwx.Session) {

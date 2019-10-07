@@ -2,7 +2,9 @@ package subcommand
 
 import (
 	"fmt"
-	"github.com/inkedawn/go-sunshinemotion"
+
+	"github.com/inkedawn/go-sunshinemotion/v3"
+
 	_const "github.com/inkedawn/sunShineSportsHelper/const"
 )
 

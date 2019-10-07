@@ -1,7 +1,8 @@
 package subcommand
 
 import (
-	jkwx "github.com/inkedawn/go-sunshinemotion"
+	jkwx "github.com/inkedawn/go-sunshinemotion/v3"
+
 	"github.com/inkedawn/sunShineSportsHelper/sessionStroage"
 )
 

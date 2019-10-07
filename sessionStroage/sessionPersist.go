@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	jkwx "github.com/inkedawn/go-sunshinemotion"
+	jkwx "github.com/inkedawn/go-sunshinemotion/v3"
 )
 
 const sessionFileFormat = "sunShine_Sports_%d_%s.session"

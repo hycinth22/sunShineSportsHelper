@@ -2,10 +2,12 @@ package subcommand
 
 import (
 	"fmt"
-	jkwx "github.com/inkedawn/go-sunshinemotion"
-	_const "github.com/inkedawn/sunShineSportsHelper/const"
 	"os"
 	"time"
+
+	jkwx "github.com/inkedawn/go-sunshinemotion/v3"
+
+	_const "github.com/inkedawn/sunShineSportsHelper/const"
 )
 
 func UploadTestData(s *jkwx.Session, cmdFlags CmdFlagsType) {
