@@ -11,6 +11,6 @@ func GetTestRule(s *jkwx.Session) {
 	if err != nil {
 		fmt.Println(err.Error())
 	} else {
-		fmt.Println(rule)
+		fmt.Printf("TestRule: %+v", rule)
 	}
 }
