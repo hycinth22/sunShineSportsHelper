@@ -94,7 +94,7 @@ func GetRandUserAgent() string {
 }
 
 func init() {
-	rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().UnixNano())
 }
 func RandRange(min int, max int) int {
 	return min + rand.Int()%(max-min+1)
