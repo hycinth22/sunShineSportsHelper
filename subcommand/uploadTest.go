@@ -13,7 +13,7 @@ import (
 func UploadTestData(s *jkwx.Session, cmdFlags CmdFlagsType) {
 	totalDistance := cmdFlags.Distance
 	duration := cmdFlags.Duration
-	endTime, err := time.Parse(_const.InputTimePattern, cmdFlags.EndTime)
+	endTime, err := time.ParseInLocation(_const.InputTimePattern, cmdFlags.EndTime, _const.TimeZoneCST)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
