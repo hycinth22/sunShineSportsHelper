@@ -53,7 +53,7 @@ func main() {
 		subcommand.UploadData(s, info, cmdFlags)
 		return
 	case "uploadTest":
-		subcommand.UploadTestData(s, cmdFlags)
+		subcommand.UploadTestData(s, info, cmdFlags)
 		return
 	case "testRule":
 		subcommand.GetTestRule(s)

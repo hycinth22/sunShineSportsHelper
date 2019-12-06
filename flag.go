@@ -3,10 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	_const "github.com/inkedawn/sunShineSportsHelper/const"
-	"github.com/inkedawn/sunShineSportsHelper/subcommand"
 	"os"
 	"time"
+
+	_const "github.com/inkedawn/sunShineSportsHelper/const"
+	"github.com/inkedawn/sunShineSportsHelper/subcommand"
 
 	"github.com/inkedawn/sunShineSportsHelper/utility"
 )
@@ -32,7 +33,7 @@ func parseFlag() {
 	flags.StringVar(&cmdFlags.User, "u", "default", "account(stuNum)")
 	flags.StringVar(&cmdFlags.Password, "p", "", "password")
 
-	flags.StringVar(&cmdFlags.EndTime, "endTime", time.Now().Format(_const.InputTimePattern), "upload test sport data")
+	flags.StringVar(&cmdFlags.EndTime, "endTime", time.Now().In(_const.TimeZoneCST).Format(_const.InputTimePattern), "upload test sport data")
 	flags.BoolVar(&cmdFlags.RawRecord, "rawRecord", false, "upload rawRecord sport data")
 	flags.BoolVar(&cmdFlags.IgnoreCompleted, "ignoreCompleted", false, "continue to upload though completed")
 	flags.Float64Var(&cmdFlags.Distance, "distance", 0.0, "distance(精确到小数点后6位).")
